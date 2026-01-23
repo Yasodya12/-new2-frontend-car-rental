@@ -98,24 +98,48 @@ export function User() {
                 </div>
 
                 <div>
-                    <label className="block mb-1 font-medium">Name</label>
+                    <label className="block mb-1 font-medium text-gray-700">Name</label>
                     <input type="text" name="name" value={userData.name}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md" required />
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
                 </div>
 
                 <div>
-                    <label className="block mb-1 font-medium">Email</label>
+                    <label className="block mb-1 font-medium text-gray-700">Email Address</label>
                     <input type="email" name="email" value={userData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md" required />
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block mb-1 font-medium text-gray-700">NIC Number</label>
+                        <input type="text" name="nic" value={userData.nic || ""}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" required />
+                    </div>
+                    <div>
+                        <label className="block mb-1 font-medium text-gray-700">Mobile Number</label>
+                        <input type="text" name="contactNumber" value={userData.contactNumber || ""}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100 italic text-sm text-gray-600">
+                    <div>
+                        <span className="font-semibold not-italic">Date of Birth:</span> {userData.dateOfBirth ? new Date(userData.dateOfBirth).toLocaleDateString() : "Extracted from NIC"}
+                    </div>
+                    <div>
+                        <span className="font-semibold not-italic">Gender:</span> {userData.gender || "Extracted from NIC"}
+                    </div>
                 </div>
 
                 <div>
-                    <label className="block mb-1 font-medium">Password</label>
-                    <input type="password" name="password" value={userData.password}
+                    <label className="block mb-1 font-medium text-gray-700">Update Password (Leave blank to keep current)</label>
+                    <input type="password" name="password" value={userData.password || ""}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md" required />
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
 
                 {userData.role === "driver" && (

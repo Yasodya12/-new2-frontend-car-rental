@@ -82,7 +82,7 @@ export function Booking() {
 
                 const ratedSet = new Set<string>();
                 for (const booking of allBookings) {
-                    if (booking.tripId?._id && (booking.status === "Confirmed" || booking.tripId?.status === "Completed")) {
+                    if (booking.tripId?._id && (booking.status === "Confirmed" || booking.tripId?.status === "Completed" || booking.tripId?.status === "Paid")) {
                         try {
                             const ratingResponse = await backendApi.get(`/api/v1/ratings/trip/${booking.tripId._id}`);
                             if (ratingResponse.data) {
@@ -358,6 +358,7 @@ export function Booking() {
                                     booking.tripId?._id &&
                                     booking.tripId?.driverId?._id &&
                                     user?.role === "customer" &&
+                                    (booking.tripId?.status === "Completed" || booking.tripId?.status === "Paid") &&
                                     !ratedTrips.has(booking.tripId._id) && (
                                         <button
                                             onClick={() => {

@@ -14,6 +14,8 @@ interface BaseForm {
     name: string;
     email: string;
     password: string;
+    nic: string;
+    contactNumber: string;
     profileImage: string;
 }
 
@@ -36,6 +38,8 @@ export function Register() {
         name: "",
         email: "",
         password: "",
+        nic: "",
+        contactNumber: "",
         role: "customer",
         profileImage: "",
     });
@@ -79,25 +83,26 @@ export function Register() {
                 alert("Registration successful.");
                 navigate("/login");
             } else {
-                alert("Registration failed.");
+                alert("Registration failed. Please check your details.");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("Registration failed.");
+            const errorMsg = err.response?.data?.error || "Registration failed.";
+            alert(errorMsg);
         }
     };
 
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-blue-50">
-            <div className="bg-white shadow-md p-8 rounded-lg w-full max-w-md">
-                <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">Register</h2>
+            <div className="bg-white shadow-md p-8 rounded-lg w-full max-w-md my-8">
+                <h2 className="text-2xl font-bold mb-6 text-center text-blue-600 font-display">Create Account</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
 
                     <div className="mb-4">
                         <ImageUpload
                             onUpload={handleImageUpload}
-                            label="Profile Picture"
+                            label="Profile Picture (Optional)"
                         />
                     </div>
 
@@ -108,34 +113,54 @@ export function Register() {
                         autoComplete='username'
                         value={form.name}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                         required
                     />
                     <input
                         type="email"
                         name="email"
-                        placeholder="Email"
+                        placeholder="Email Address"
                         autoComplete={'email'}
                         value={form.email}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                         required
                     />
+                    <div className="grid grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            name="nic"
+                            placeholder="NIC Number"
+                            value={form.nic}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            required
+                        />
+                        <input
+                            type="text"
+                            name="contactNumber"
+                            placeholder="Mobile Number"
+                            value={form.contactNumber}
+                            onChange={handleChange}
+                            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            required
+                        />
+                    </div>
                     <input
                         type="password"
                         name="password"
                         placeholder="Password"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
                         value={form.password}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                         required
                     />
                     <select
                         name="role"
                         value={form.role}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 p-2 rounded"
+                        className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                         <option value="customer">Customer</option>
                         <option value="driver">Driver</option>

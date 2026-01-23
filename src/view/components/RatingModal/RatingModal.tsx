@@ -1,7 +1,7 @@
 import { useState } from "react";
-import {getUserFromToken} from "../../../auth/auth.ts";
-import {backendApi} from "../../../api.ts";
-import {AxiosError} from "axios";
+import { getUserFromToken } from "../../../auth/auth.ts";
+import { backendApi } from "../../../api.ts";
+import { AxiosError } from "axios";
 
 export interface UserData {
     _id?: string
@@ -10,6 +10,10 @@ export interface UserData {
     password: string
     role: string
     profileImage?: string | null | undefined
+    nic?: string
+    contactNumber?: string
+    dateOfBirth?: string | Date | null
+    gender?: string | null
     averageRating?: number
     totalRatings?: number
     experience?: number
@@ -47,29 +51,20 @@ export function RatingModal({ tripId, driverId, driverName, onClose, onRatingSub
         setLoading(true);
         try {
             const accessToken = localStorage.getItem("accessToken");
-            
+
             // Get user from token
 
             const tokenUser = getUserFromToken(accessToken || "");
-            
-            if (!tokenUser || !tokenUser.email) {
-                alert("User not found");
-                return;
-            }
-            
-            // Get customer ID from user data
-            const userResponse = await backendApi.get("/api/v1/users/all");
-            const currentUser = userResponse.data.find((u: UserData) => u.email === tokenUser.email);
-            
-            if (!currentUser) {
-                alert("User not found");
+
+            if (!tokenUser || !tokenUser._id) {
+                alert("Session expired. Please log in again.");
                 return;
             }
 
             await backendApi.post("/api/v1/ratings/save", {
                 tripId,
                 driverId,
-                customerId: currentUser._id,
+                customerId: tokenUser._id,
                 rating,
                 comment: comment.trim() || undefined
             });
@@ -78,14 +73,16 @@ export function RatingModal({ tripId, driverId, driverName, onClose, onRatingSub
             onRatingSubmitted();
             onClose();
         } catch (error: unknown) {
+            console.error("Rating submission error:", error);
             if (error instanceof AxiosError) {
-                if (error.response?.status === 400 && error.response?.data?.error?.includes("already exists")) {
+                const errorMessage = error.response?.data?.error || error.response?.data?.message;
+                if (errorMessage?.includes("already exists")) {
                     alert("You have already rated this trip.");
                 } else {
-                    alert("Failed to submit rating. Please try again.");
+                    alert(`Failed to submit rating: ${errorMessage || "Unknown error"}`);
                 }
             } else {
-                alert("Failed to submit rating. Please try again.");
+                alert("Failed to submit rating. Please check your connection and try again.");
             }
         } finally {
             setLoading(false);
@@ -97,7 +94,7 @@ export function RatingModal({ tripId, driverId, driverName, onClose, onRatingSub
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-4">Rate Your Driver</h2>
                 <p className="text-gray-600 mb-4">How was your trip with <strong>{driverName}</strong>?</p>
-                
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label className="block text-sm font-medium mb-2">Rating</label>

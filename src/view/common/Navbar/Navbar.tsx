@@ -13,6 +13,10 @@ export interface UserData {
     password: string
     role: string
     profileImage?: string | null | undefined
+    nic?: string
+    contactNumber?: string
+    dateOfBirth?: string | Date | null
+    gender?: string | null
     averageRating?: number
     totalRatings?: number
     experience?: number

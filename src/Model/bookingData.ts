@@ -1,13 +1,13 @@
 export interface BookingData {
     _id?: string;
-    customerId:string;
+    customerId: string;
     tripId: string;
     bookingDate: Date;
     status: string;
     notes?: string | null;
 }
 
-export interface PopulatedBookingDTO{
+export interface PopulatedBookingDTO {
     _id?: string;
     customerId: {
         _id: string;
@@ -30,6 +30,7 @@ export interface PopulatedBookingDTO{
         startLocation: string;
         endLocation: string;
         date: Date;
+        status: string;
     } | null;
 
     bookingDate: Date;

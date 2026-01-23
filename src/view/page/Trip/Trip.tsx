@@ -275,7 +275,7 @@ export function Trip() {
         try {
             if (user?.role === "customer" && user._id && localTrips.length > 0) {
                 const customerCompleted = localTrips.filter(
-                    (trip) => trip.customerId && trip.customerId._id && user._id && trip.customerId._id === user._id && trip.status === "Completed"
+                    (trip) => trip.customerId && trip.customerId._id && user._id && trip.customerId._id === user._id && (trip.status === "Completed" || trip.status === "Paid")
                 );
 
                 const ratedSet = new Set<string>();
