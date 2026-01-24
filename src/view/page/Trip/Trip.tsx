@@ -213,7 +213,7 @@ export function Trip() {
             if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
 
             return true;
-        });
+        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     };
 
     const filteredTrips = getFilteredTrips();
@@ -1661,7 +1661,7 @@ export function Trip() {
                             if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
                             if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
                             return true;
-                        });
+                        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
                         // Pagination Logic
                         const indexOfLastItem = currentPage * itemsPerPage;
@@ -1879,7 +1879,7 @@ export function Trip() {
                             if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
                             if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
                             return true;
-                        });
+                        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
                         // Pagination Logic
                         const indexOfLastItem = currentPage * itemsPerPage;
