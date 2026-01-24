@@ -47,6 +47,7 @@ export function AdminDocuments() {
                 status,
                 adminNotes: adminNotes[docId] || "",
             });
+            alert(`Document ${status.toLowerCase()} successfully! ✅`);
             await fetchApprovals(); // Refresh the whole list to get updated status
         } catch (error) {
             console.error(`Failed to ${status} document`, error);
@@ -222,17 +223,20 @@ export function AdminDocuments() {
                                                     <div className="flex gap-3">
                                                         <button
                                                             onClick={() => handleVerifyDoc(doc._id, "Rejected")}
-                                                            disabled={processingId === doc._id}
-                                                            className="flex-1 bg-red-50 text-red-600 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-100 transition shadow-sm active:scale-95"
+                                                            disabled={processingId === doc._id || doc.status === "Verified" || doc.status === "Rejected"}
+                                                            className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-sm active:scale-95 ${doc.status === "Verified" || doc.status === "Rejected"
+                                                                    ? "bg-gray-100 text-gray-400 cursor-default shadow-none"
+                                                                    : "bg-red-50 text-red-600 hover:bg-red-100"
+                                                                }`}
                                                         >
-                                                            Reject
+                                                            {doc.status === "Rejected" ? "Rejected ❌" : "Reject"}
                                                         </button>
                                                         <button
                                                             onClick={() => handleVerifyDoc(doc._id, "Verified")}
-                                                            disabled={processingId === doc._id || doc.status === "Verified"}
-                                                            className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-md active:scale-95 ${doc.status === "Verified"
-                                                                ? "bg-gray-100 text-gray-400 cursor-default"
-                                                                : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"
+                                                            disabled={processingId === doc._id || doc.status === "Verified" || doc.status === "Rejected"}
+                                                            className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition shadow-md active:scale-95 ${doc.status === "Verified" || doc.status === "Rejected"
+                                                                    ? "bg-gray-100 text-gray-400 cursor-default shadow-none"
+                                                                    : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"
                                                                 }`}
                                                         >
                                                             {doc.status === "Verified" ? "Verified ✓" : "Verify ✅"}

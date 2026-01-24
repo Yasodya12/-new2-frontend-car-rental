@@ -162,6 +162,27 @@ export function Trip() {
         ? vehicles
         : vehicles.filter(v => (v.category || "Standard") === selectedCategory);
 
+    // Filter Filters for Admin View
+    const [activeTab, setActiveTab] = useState<'All' | 'Instant' | 'Scheduled'>('All');
+    const [filterStatus, setFilterStatus] = useState<string>('All');
+
+    // Filter trips based on inputs
+    const getFilteredTrips = () => {
+        if (!trips || !Array.isArray(trips)) return [];
+        return trips.filter(trip => {
+            // Filter by Tab (Trip Type)
+            if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
+            if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
+
+            // Filter by Status
+            if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
+
+            return true;
+        });
+    };
+
+    const filteredTrips = getFilteredTrips();
+
     useEffect(() => {
         if (trips && Array.isArray(trips) && trips.length > 0) {
             setLocalTrips(trips);
@@ -1406,7 +1427,58 @@ export function Trip() {
 
             {((user?.role?.toLowerCase() || role?.toLowerCase()) === "admin") && (
                 <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">Trips</h2>
+                    <h2 className="text-2xl font-bold mb-4">Trips Management</h2>
+
+                    {/* Filters Control Bar */}
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
+
+                        {/* Tabs */}
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setActiveTab('All')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                All Trips
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Instant')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Quick Rides
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Scheduled')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Scheduled Rides
+                            </button>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Accepted">Accepted - Driver Assigned</option>
+                                <option value="Processing">Processing - In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-gray-500 mb-2">Showing {filteredTrips.length} results</p>
+
                     <table className="w-full border-collapse bg-white shadow rounded">
                         <thead>
                             <tr className="bg-blue-600 text-white">
@@ -1417,36 +1489,68 @@ export function Trip() {
                                 <th className="p-3 text-left">Trip Date</th>
                                 <th className="p-3 text-left">Booking Date</th>
                                 <th className="p-3 text-left">Status</th>
+                                <th className="p-3 text-left">Type</th>
                                 <th className="p-3 text-left">Discount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {tripState.loading || tripState.error ? (
                                 <tr>
-                                    <td colSpan={8}>
+                                    <td colSpan={9}>
                                         {tripState.loading ? (
-                                            <p>Loading trips...</p>
+                                            <p className="p-4 text-center">Loading trips...</p>
                                         ) : (
-                                            <p className="text-red-500">{tripState.error}</p>
+                                            <p className="p-4 text-center text-red-500">{tripState.error}</p>
                                         )}
                                     </td>
                                 </tr>
+                            ) : filteredTrips.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9} className="p-8 text-center text-gray-500 italic">
+                                        No trips found matching the selected filters.
+                                    </td>
+                                </tr>
                             ) : (
-                                (trips && Array.isArray(trips) ? trips : []).map(trip => (
-                                    <tr key={trip._id} className="border-b">
+                                filteredTrips.map(trip => (
+                                    <tr key={trip._id} className="border-b hover:bg-gray-50">
                                         <td className="p-3">{trip.customerId?.name || "N/A"}</td>
                                         <td className="p-3">{trip.driverId?.name || "N/A"}</td>
                                         <td className="p-3">{trip.vehicleId?.brand} {trip.vehicleId?.model || "N/A"}</td>
-                                        <td className="p-3">{trip.startLocation} → {trip.endLocation}</td>
                                         <td className="p-3">
+                                            <div className="flex flex-col text-sm max-w-[200px]">
+                                                <span className="truncate" title={trip.startLocation}>{trip.startLocation}</span>
+                                                <span className="text-xs text-gray-400">↓</span>
+                                                <span className="truncate" title={trip.endLocation}>{trip.endLocation}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-3 text-sm">
                                             {trip.date ? (
                                                 trip.endDate && new Date(trip.date).toDateString() !== new Date(trip.endDate).toDateString()
                                                     ? `${new Date(trip.date).toLocaleString()} - ${new Date(trip.endDate).toLocaleString()}`
                                                     : new Date(trip.date).toLocaleString()
                                             ) : "N/A"}
                                         </td>
-                                        <td className="p-3">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</td>
-                                        <td className="p-3 font-semibold">{trip.status || "N/A"}</td>
+                                        <td className="p-3 text-sm">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${trip.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                                    trip.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                                                        trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                            trip.status === 'Accepted' ? 'bg-blue-100 text-blue-800' :
+                                                                trip.status === 'cancelled' || trip.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                                                                    trip.status === 'Rejected' ? 'bg-red-50 text-red-600' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                {trip.status || "N/A"}
+                                            </span>
+                                        </td>
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 rounded text-xs ${trip.tripType === 'Instant' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
+                                                    trip.tripType === 'Scheduled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                                        'bg-gray-50 text-gray-600'
+                                                }`}>
+                                                {trip.tripType === 'Instant' ? 'Quick' : trip.tripType || 'Other'}
+                                            </span>
+                                        </td>
                                         <td className="p-3">
                                             {trip.promoCode ? (
                                                 <div className="flex flex-col">

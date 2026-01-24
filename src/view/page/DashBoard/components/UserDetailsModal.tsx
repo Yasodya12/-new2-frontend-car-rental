@@ -198,7 +198,7 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                 <img src={doc.documentUrl} alt={doc.type} className="w-full h-full object-cover" />
                                             </div>
 
-                                            {doc.status === 'Pending' && (
+                                            {(doc.status === 'Pending' || doc.status === 'Rejected') && (
                                                 <div className="space-y-3 pt-3 border-t border-gray-100">
                                                     <textarea
                                                         placeholder="Add clarification notes..."
@@ -216,12 +216,21 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                             onClick={async () => {
                                                                 if (doc._id) {
                                                                     setVerifyingId(doc._id);
-                                                                    await dispatch(verifyDocument({ id: doc._id, status: 'Verified', adminNotes: docAdminNotes[doc._id] }));
-                                                                    setVerifyingId(null);
+                                                                    try {
+                                                                        await dispatch(verifyDocument({ id: doc._id, status: 'Verified', adminNotes: docAdminNotes[doc._id] })).unwrap();
+                                                                        alert(`Document verified successfully! ✅`);
+                                                                    } catch (err) {
+                                                                        alert("Failed to verify document");
+                                                                    } finally {
+                                                                        setVerifyingId(null);
+                                                                    }
                                                                 }
                                                             }}
-                                                            disabled={!!verifyingId}
-                                                            className="flex-1 bg-green-600 text-white text-xs py-2.5 rounded-xl font-bold hover:bg-green-700 disabled:bg-gray-300 shadow-md transition-all active:scale-95"
+                                                            disabled={!!verifyingId || doc.status === 'Rejected'}
+                                                            className={`flex-1 text-white text-xs py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 ${doc.status === 'Rejected'
+                                                                    ? 'bg-gray-300 cursor-default'
+                                                                    : 'bg-green-600 hover:bg-green-700'
+                                                                }`}
                                                         >
                                                             Approve {doc.type}
                                                         </button>
@@ -229,12 +238,21 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                             onClick={async () => {
                                                                 if (doc._id) {
                                                                     setVerifyingId(doc._id);
-                                                                    await dispatch(verifyDocument({ id: doc._id, status: 'Rejected', adminNotes: docAdminNotes[doc._id] }));
-                                                                    setVerifyingId(null);
+                                                                    try {
+                                                                        await dispatch(verifyDocument({ id: doc._id, status: 'Rejected', adminNotes: docAdminNotes[doc._id] })).unwrap();
+                                                                        alert(`Document rejected successfully! ❌`);
+                                                                    } catch (err) {
+                                                                        alert("Failed to reject document");
+                                                                    } finally {
+                                                                        setVerifyingId(null);
+                                                                    }
                                                                 }
                                                             }}
-                                                            disabled={!!verifyingId}
-                                                            className="flex-1 bg-red-600 text-white text-xs py-2.5 rounded-xl font-bold hover:bg-red-700 disabled:bg-gray-300 shadow-md transition-all active:scale-95"
+                                                            disabled={!!verifyingId || doc.status === 'Rejected'}
+                                                            className={`flex-1 text-white text-xs py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 ${doc.status === 'Rejected'
+                                                                    ? 'bg-gray-300 cursor-default'
+                                                                    : 'bg-red-600 hover:bg-red-700'
+                                                                }`}
                                                         >
                                                             Reject
                                                         </button>

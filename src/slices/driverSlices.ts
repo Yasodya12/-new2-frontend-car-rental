@@ -20,9 +20,16 @@ const initialState: driverState = {
 
 export const getAllDrivers = createAsyncThunk(
     'driver/getAllDrivers',
-    async () => {
+    async (params?: { filter?: string, search?: string }) => {
         const isAdmin = localStorage.getItem('role') === 'admin';
-        const response = await backendApi.get(`api/v1/users/find-by-role/driver${isAdmin ? '?includeUnapproved=true' : ''}`);
+        let query = `api/v1/users/find-by-role/driver?`;
+
+        if (isAdmin) query += 'includeUnapproved=true';
+
+        if (params?.filter && params.filter !== 'all') query += `&filter=${params.filter}`;
+        if (params?.search) query += `&search=${encodeURIComponent(params.search)}`;
+
+        const response = await backendApi.get(query);
         return await response.data;
     }
 );

@@ -381,26 +381,27 @@ export function Dashboard() {
                         </h2>
                     </div>
                     <div className="p-6">
-                        <div className="space-y-6">
-                            {dashboard.data?.tripDistribution?.map((item: any) => {
-                                const total = dashboard.data.totalTrips || 1;
-                                const percentage = (item.count / total) * 100;
-                                return (
-                                    <div key={item.type}>
-                                        <div className="flex justify-between text-sm font-medium mb-2">
-                                            <span className="text-gray-700">{item.type} Rides</span>
-                                            <span className="text-gray-500">{item.count} ({percentage.toFixed(1)}%)</span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full ${item.type === 'Instant' ? 'bg-orange-500' : 'bg-blue-500'}`}
-                                                style={{ width: `${percentage}%` }}
-                                            ></div>
-                                        </div>
+                        {dashboard.data?.tripDistribution?.map((item: any) => {
+                            if (!item.type) return null;
+                            const total = dashboard.data.totalTrips || 1;
+                            const percentage = (item.count / total) * 100;
+                            return (
+                                <div key={item.type}>
+                                    <div className="flex justify-between text-sm font-medium mb-2">
+                                        <span className="text-gray-700">{item.type} Rides</span>
+                                        <span className="text-gray-500">{item.count} ({percentage.toFixed(1)}%)</span>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full ${item.type === 'Instant' ? 'bg-orange-500' :
+                                                item.type === 'Scheduled' ? 'bg-blue-500' : 'bg-gray-400'
+                                                }`}
+                                            style={{ width: `${percentage}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
