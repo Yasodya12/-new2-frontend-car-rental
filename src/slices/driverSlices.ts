@@ -21,7 +21,8 @@ const initialState: driverState = {
 export const getAllDrivers = createAsyncThunk(
     'driver/getAllDrivers',
     async () => {
-        const response = await backendApi.get('api/v1/users/find-by-role/driver');
+        const isAdmin = localStorage.getItem('role') === 'admin';
+        const response = await backendApi.get(`api/v1/users/find-by-role/driver${isAdmin ? '?includeUnapproved=true' : ''}`);
         return await response.data;
     }
 );

@@ -90,7 +90,7 @@ export function Navbar() {
                         <>
                             <Link to="/live-map" className="hover:underline">Live Map 🌍</Link>
                             <Link to="/admin/chat" className="hover:underline">Messages 💬</Link>
-                            <Link to="/admin/documents" className="hover:underline">Verifications 📄</Link>
+                            <Link to="/admin/approvals" className="hover:underline">Driver Approvals 👤</Link>
                         </>
                     )}
                     <Link to="/driver" className="hover:underline">Drivers</Link>

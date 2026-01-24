@@ -1,42 +1,32 @@
 import type { UserData } from "../../../Model/userData.ts";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../../store/store.ts";
-import { approveDriver } from "../../../slices/driverSlices.ts";
+
+
 
 
 type driverCardProps = {
     data: UserData;
+    onViewDetails?: () => void;
 }
 
 
-export function DriverCard({ data }: driverCardProps) {
+export function DriverCard({ data, onViewDetails }: driverCardProps) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [userRole, setUserRole] = useState<string | null>(null);
     const navigate = useNavigate();
-    const dispatch = useDispatch<AppDispatch>();
 
 
     useEffect(() => {
         if (data.profileImage) {
             setImageUrl(`http://localhost:3000/uploads/profile/${data.profileImage}`);
         }
-
-        // Get user role from localStorage
-        const role = localStorage.getItem('role');
-        setUserRole(role);
     }, [data]);
 
     function handleBookNow() {
         navigate('/trips');
     }
 
-    function handleApprove() {
-        if (data._id) {
-            dispatch(approveDriver(data._id));
-        }
-    }
+
 
 
     return (
@@ -84,15 +74,7 @@ export function DriverCard({ data }: driverCardProps) {
                     </p>
                 </div>
 
-                {/* Show Approve button for admin users on pending drivers */}
-                {userRole === 'admin' && !data.isApproved && (
-                    <button
-                        onClick={handleApprove}
-                        className="mt-3 w-full py-[6px] bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-md transition-colors duration-200"
-                    >
-                        Approve Driver
-                    </button>
-                )}
+
 
                 <button
                     onClick={handleBookNow}
@@ -100,6 +82,15 @@ export function DriverCard({ data }: driverCardProps) {
                 >
                     Book Now
                 </button>
+
+                {onViewDetails && (
+                    <button
+                        onClick={onViewDetails}
+                        className="mt-2 w-full py-[6px] border border-blue-600 text-blue-600 hover:bg-blue-50 text-xs font-semibold rounded-md transition-colors duration-200"
+                    >
+                        View Details
+                    </button>
+                )}
             </div>
         </div>
 

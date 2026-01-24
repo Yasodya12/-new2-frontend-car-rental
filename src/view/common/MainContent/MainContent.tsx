@@ -12,6 +12,7 @@ import { Promotions } from "../../page/Promotions/Promotions.tsx";
 import { HelpCenter } from "../../page/HelpCenter/HelpCenter.tsx";
 import { Documents } from "../../page/Driver/Documents.tsx";
 import { AdminDocuments } from "../../page/Admin/AdminDocuments.tsx";
+import { ChangePassword } from "../../page/User/ChangePassword.tsx";
 
 export function MainContent() {
     return (
@@ -27,8 +28,9 @@ export function MainContent() {
                 <Route path="/promotions" element={<MainLayout><Promotions /></MainLayout>}></Route>
                 <Route path="/help-center" element={<MainLayout><HelpCenter /></MainLayout>}></Route>
                 <Route path="/user" element={<MainLayout><User /></MainLayout>}></Route>
+                <Route path="/change-password" element={<MainLayout><ChangePassword /></MainLayout>}></Route>
                 <Route path="/documents" element={<MainLayout><Documents /></MainLayout>}></Route>
-                <Route path="/admin/documents" element={<MainLayout><AdminDocuments /></MainLayout>}></Route>
+                <Route path="/admin/approvals" element={<MainLayout><AdminDocuments /></MainLayout>}></Route>
             </Routes>
         </div>
 

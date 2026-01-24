@@ -1,4 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from "react";
+import { Link } from "react-router-dom";
 import { backendApi } from "../../../api.ts";
 import { getUserFromToken } from "../../../auth/auth.ts";
 import type { UserData } from "../../../Model/userData.ts";
@@ -128,18 +129,31 @@ export function User() {
 
                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100 italic text-sm text-gray-600">
                     <div>
-                        <span className="font-semibold not-italic">Date of Birth:</span> {userData.dateOfBirth ? new Date(userData.dateOfBirth).toLocaleDateString() : "Extracted from NIC"}
+                        <span className="font-semibold not-italic">Date of Birth:</span> {
+                            (() => {
+                                if (!userData.dateOfBirth) return "Extracted from NIC";
+                                if (typeof userData.dateOfBirth === "string" && userData.dateOfBirth.includes("-")) {
+                                    const [year, month, day] = userData.dateOfBirth.split("-");
+                                    return `${day}/${month}/${year}`;
+                                }
+                                return new Date(userData.dateOfBirth).toLocaleDateString();
+                            })()
+                        }
                     </div>
                     <div>
                         <span className="font-semibold not-italic">Gender:</span> {userData.gender || "Extracted from NIC"}
                     </div>
                 </div>
 
-                <div>
-                    <label className="block mb-1 font-medium text-gray-700">Update Password (Leave blank to keep current)</label>
-                    <input type="password" name="password" value={userData.password || ""}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" />
+                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                    <div>
+                        <h3 className="font-semibold text-blue-800">Security</h3>
+                        <p className="text-sm text-gray-600">Update your password to keep your account safe</p>
+                    </div>
+                    <Link to="/change-password"
+                        className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition duration-300 shadow-sm font-medium">
+                        Change Password
+                    </Link>
                 </div>
 
                 {userData.role === "driver" && (

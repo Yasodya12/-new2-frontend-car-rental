@@ -6,7 +6,7 @@ import type { RootState } from "../../../store/store";
 
 interface DriverDocument {
     _id: string;
-    type: "License" | "Insurance" | "ID";
+    type: "License" | "ID";
     documentUrl: string;
     expiryDate?: string;
     status: "Pending" | "Verified" | "Rejected";
@@ -36,7 +36,7 @@ export function Documents() {
         }
     };
 
-    const handleUploadComplete = async (type: "License" | "Insurance" | "ID", url: string) => {
+    const handleUploadComplete = async (type: "License" | "ID", url: string) => {
         try {
             await backendApi.post("/api/v1/documents", {
                 type,
@@ -52,7 +52,7 @@ export function Documents() {
 
     const getDocByType = (type: string) => documents.find(d => d.type === type);
 
-    const renderDocumentSection = (type: "License" | "Insurance" | "ID", title: string, description: string) => {
+    const renderDocumentSection = (type: "License" | "ID", title: string, description: string) => {
         const doc = getDocByType(type);
 
         return (
@@ -120,7 +120,6 @@ export function Documents() {
             <div className="space-y-8">
                 {renderDocumentSection("ID", "NIC / National ID", "Upload both front and back if possible in one image.")}
                 {renderDocumentSection("License", "Driving License", "Ensure the license number and expiry date are clearly visible.")}
-                {renderDocumentSection("Insurance", "Vehicle Insurance", "Valid insurance document for your primary vehicle.")}
             </div>
         </div>
     );

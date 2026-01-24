@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../../store/store.ts";
-import { verifyDocument } from "../../../../slices/documentSlice.ts";
+import { fetchDriverDocuments, clearDriverDocuments, verifyDocument } from "../../../../slices/documentSlice.ts";
 import { approveDriver, getAllDrivers } from "../../../../slices/driverSlices.ts";
 import { getAllUsers } from "../../../../slices/UserSlices.ts";
 import type { UserData } from "../../../../Model/userData.ts";
@@ -17,10 +17,20 @@ interface UserDetailsModalProps {
 export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps) {
     const dispatch = useDispatch<AppDispatch>();
     const { driverDocuments } = useSelector((state: RootState) => state.documents);
+    const { role: loggedInRole } = useSelector((state: RootState) => state.auth);
     const [docAdminNotes, setDocAdminNotes] = useState<{ [key: string]: string }>({});
     const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
-    const mandatoryTypes = ["License", "Insurance", "ID"];
+    useEffect(() => {
+        if (user.role === 'driver' && user._id) {
+            dispatch(fetchDriverDocuments(user._id));
+        }
+        return () => {
+            dispatch(clearDriverDocuments());
+        };
+    }, [dispatch, user._id, user.role]);
+
+    const mandatoryTypes = ["License", "ID"];
     const verifiedDocs = driverDocuments.filter((d: DriverDocumentData) => d.status === 'Verified');
     const pendingMandatory = driverDocuments.filter((d: DriverDocumentData) =>
         mandatoryTypes.includes(d.type) && d.status === 'Pending'
@@ -118,12 +128,16 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                     <p className="text-gray-500 font-mono text-[10px] uppercase tracking-wider">User ID</p>
                                     <p className="font-mono text-xs text-gray-400">{user._id}</p>
                                 </div>
+                                <div className="md:col-span-2">
+                                    <p className="text-gray-500 font-mono text-[10px] uppercase tracking-wider">Registered Location</p>
+                                    <p className="font-semibold text-gray-700">{user.location?.address || "N/A"}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Driver Documents Section */}
-                    {user.role === 'driver' && (
+                    {/* Driver Documents Section - Admin Only */}
+                    {user.role === 'driver' && loggedInRole === 'admin' && (
                         <div className="pt-6 border-t border-gray-200">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -262,7 +276,7 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
 
                 <div className="sticky bottom-0 bg-white/80 backdrop-blur-md p-6 border-t rounded-b-lg flex justify-between items-center z-10 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)]">
                     <div>
-                        {user.role === 'driver' && !user.isApproved && (
+                        {user.role === 'driver' && !user.isApproved && loggedInRole === 'admin' && (
                             <div className="flex flex-col items-start gap-1">
                                 <button
                                     onClick={async () => {
@@ -271,7 +285,7 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                 await dispatch(approveDriver(user._id)).unwrap();
                                                 alert("Driver account activated successfully! 🎉");
                                                 dispatch(getAllUsers());
-                                                dispatch(getAllDrivers(true));
+                                                dispatch(getAllDrivers());
                                                 onClose();
                                             } catch (err: any) {
                                                 alert(err.message || "Failed to activate driver account");

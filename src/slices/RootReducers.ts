@@ -8,6 +8,7 @@ import userReducer from "./UserSlices.ts";
 import chatReducer from "./chatSlice.ts";
 import ticketReducer from "./ticketSlice.ts";
 import notificationReducer from "./notificationSlice.ts";
+import documentReducer from "./documentSlice.ts";
 
 export const rootReducer = combineReducers({
     auth: authReducer,
@@ -18,7 +19,8 @@ export const rootReducer = combineReducers({
     user: userReducer,
     chat: chatReducer,
     tickets: ticketReducer,
-    notification: notificationReducer
+    notification: notificationReducer,
+    documents: documentReducer
 });
 
 export type rootReducerState = ReturnType<typeof rootReducer>

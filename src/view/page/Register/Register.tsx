@@ -22,6 +22,8 @@ interface BaseForm {
 interface DriverForm extends BaseForm {
     role: "driver";
     location: Location;
+    licenseImage?: string;
+    idImage?: string;
 }
 
 interface NonDriverForm extends BaseForm {
@@ -165,6 +167,19 @@ export function Register() {
                         <option value="customer">Customer</option>
                         <option value="driver">Driver</option>
                     </select>
+
+                    {form.role === "driver" && (
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                            <ImageUpload
+                                onUpload={(url) => setForm(prev => ({ ...prev, licenseImage: url }))}
+                                label="Driving License"
+                            />
+                            <ImageUpload
+                                onUpload={(url) => setForm(prev => ({ ...prev, idImage: url }))}
+                                label="NIC Image"
+                            />
+                        </div>
+                    )}
 
                     {form.role === "driver" && (
                         <LocationPicker
