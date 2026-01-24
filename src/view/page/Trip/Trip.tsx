@@ -165,6 +165,41 @@ export function Trip() {
     // Filter Filters for Admin View
     const [activeTab, setActiveTab] = useState<'All' | 'Instant' | 'Scheduled'>('All');
     const [filterStatus, setFilterStatus] = useState<string>('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Reset page on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, filterStatus]);
+
+    // Simple Pagination Component
+    const Pagination = ({ totalItems, currentPage, onPageChange }: { totalItems: number, currentPage: number, onPageChange: (page: number) => void }) => {
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-center mt-6 gap-2">
+                <button
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                >
+                    Prev
+                </button>
+                <span className="flex items-center px-2 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <button
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                >
+                    Next
+                </button>
+            </div>
+        );
+    };
 
     // Filter trips based on inputs
     const getFilteredTrips = () => {
@@ -197,22 +232,9 @@ export function Trip() {
     const customerTrips = localTrips.filter(
         (trip) => {
             const tripCustId = (trip.customerId?._id || trip.customerId || "").toString();
-            // Token typically has 'id', Redux state often has '_id'
             const currUserId = (user?._id || (user as any)?.id || "").toString();
             return tripCustId && currUserId && tripCustId === currUserId;
         }
-    );
-
-    const customerPendingTrips = customerTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "pending"
-    );
-
-    const customerProcessingTrips = customerTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "accepted" || trip.status?.toLowerCase() === "processing"
-    );
-
-    const customerCompletedTrips = customerTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "completed" || trip.status?.toLowerCase() === "paid"
     );
 
     // Driver trips
@@ -223,21 +245,6 @@ export function Trip() {
             return tripDriverId && currUserId && tripDriverId === currUserId;
         }
     );
-
-    const driverPendingTrips = driverTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "pending"
-    );
-
-    const driverProcessingTrips = driverTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "accepted" || trip.status?.toLowerCase() === "processing"
-    );
-
-    const driverCompletedTrips = driverTrips.filter(
-        (trip) => trip.status?.toLowerCase() === "completed" || trip.status?.toLowerCase() === "paid"
-    );
-
-    console.log("Driver Pending Trip IDs:", driverPendingTrips.map(t => t._id));
-    console.log("Customer Pending Trip IDs:", customerPendingTrips.map(t => t._id));
 
     // Helper function to format date display with endDate if present and different
     const formatTripDate = (trip: PopulatedTripDTO) => {
@@ -435,7 +442,7 @@ export function Trip() {
 
             if (sortedDrivers.length > 0) {
                 const bestDriver = sortedDrivers[0];
-                setTripData(prev => ({ ...prev, driverId: bestDriver._id }));
+                setTripData(prev => ({ ...prev, driverId: bestDriver._id || "" }));
                 console.log("Automatically suggested best driver:", bestDriver.name);
             }
         }
@@ -463,7 +470,7 @@ export function Trip() {
 
             if (sortedVehicles.length > 0) {
                 const bestVehicle = sortedVehicles[0];
-                setTripData(prev => ({ ...prev, vehicleId: bestVehicle._id }));
+                setTripData(prev => ({ ...prev, vehicleId: bestVehicle._id || "" }));
                 console.log("Automatically suggested best vehicle:", bestVehicle.brand, bestVehicle.model);
             }
         }
@@ -1533,20 +1540,20 @@ export function Trip() {
                                         <td className="p-3 text-sm">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</td>
                                         <td className="p-3">
                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${trip.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                                                    trip.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                                                        trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                            trip.status === 'Accepted' ? 'bg-blue-100 text-blue-800' :
-                                                                trip.status === 'cancelled' || trip.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    trip.status === 'Rejected' ? 'bg-red-50 text-red-600' :
-                                                                        'bg-gray-100 text-gray-800'
+                                                trip.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                                                    trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                        trip.status === 'Accepted' ? 'bg-blue-100 text-blue-800' :
+                                                            trip.status === 'cancelled' || trip.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                                                                trip.status === 'Rejected' ? 'bg-red-50 text-red-600' :
+                                                                    'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {trip.status || "N/A"}
                                             </span>
                                         </td>
                                         <td className="p-3">
                                             <span className={`px-2 py-1 rounded text-xs ${trip.tripType === 'Instant' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
-                                                    trip.tripType === 'Scheduled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                                        'bg-gray-50 text-gray-600'
+                                                trip.tripType === 'Scheduled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                                    'bg-gray-50 text-gray-600'
                                                 }`}>
                                                 {trip.tripType === 'Instant' ? 'Quick' : trip.tripType || 'Other'}
                                             </span>
@@ -1600,138 +1607,217 @@ export function Trip() {
                         </div>
                     </div>
 
-                    {driverPendingTrips.length === 0 && driverProcessingTrips.length === 0 && driverCompletedTrips.length === 0 && (
-                        <p className="text-center text-gray-600">You don't have any trips at the moment.</p>
-                    )}
-
-                    {driverPendingTrips.length > 0 && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Pending Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {driverPendingTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        {trip.customerId && (
-                                            <p><strong>Customer:</strong> {trip.customerId.name} ({trip.customerId.email})</p>
-                                        )}
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model || "N/A"}</p>
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        <p className="mt-2"><strong>Status:</strong> <span
-                                            className="text-blue-600">{trip.status || "N/A"}</span></p>
-
-                                        <div className="flex justify-between mt-4 gap-2">
-                                            <button
-                                                onClick={() => handleRejectTrip(trip._id!)}
-                                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                                            >
-                                                Decline
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    // Extended Trips (has endDate) → "Accepted"
-                                                    // Quick Rides (no endDate) → "Processing"
-                                                    const newStatus = trip.endDate ? "Accepted" : "Processing";
-                                                    handleStatusUpdateUI(trip._id!, newStatus);
-                                                }}
-                                                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                                            >
-                                                Accept
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Filters Control Bar */}
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
+                        {/* Tabs */}
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setActiveTab('All')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                All Trips
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Instant')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Quick Rides
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Scheduled')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Scheduled Rides
+                            </button>
                         </div>
-                    )}
 
-                    {driverProcessingTrips.length > 0 && (
-                        <div className="mt-10">
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Active Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {driverProcessingTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        {trip.customerId && (
-                                            <p><strong>Customer:</strong> {trip.customerId.name} ({trip.customerId.email})</p>
-                                        )}
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model || "N/A"}</p>
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        {trip.promoCode && (
-                                            <div className="bg-green-50 p-1.5 rounded border border-green-200 mt-2 text-sm">
-                                                <span className="text-green-700 font-bold">Promo Applied: {trip.promoCode}</span>
-                                                <br />
-                                                <span className="text-red-600 font-bold font-mono">- Rs. {trip.discountAmount}</span>
-                                            </div>
-                                        )}
-                                        <p className="mt-2"><strong>Status:</strong> <span
-                                            className="text-yellow-600">{trip.status || "N/A"}</span></p>
-
-
-                                        <div className="flex justify-end mt-4">
-                                            {trip.status === "Accepted" && new Date(trip.date) <= new Date() ? (
-                                                <button
-                                                    onClick={() => handleStatusUpdateUI(trip._id!, "Processing")}
-                                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                                >
-                                                    Start Trip
-                                                </button>
-                                            ) : trip.status === "Accepted" ? (
-                                                <p className="text-sm text-gray-500 italic">
-                                                    Trip starts on {new Date(trip.date).toLocaleString()}
-                                                </p>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleStatusUpdateUI(trip._id!, "Completed")}
-                                                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                                                >
-                                                    Complete
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Accepted">Accepted - Future</option>
+                                <option value="Processing">Processing - Active</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
                         </div>
-                    )}
+                    </div>
 
-                    {driverCompletedTrips.length > 0 && (
-                        <div className="mt-10 mb-8">
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Completed Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {driverCompletedTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        {trip.customerId && (
-                                            <p><strong>Customer:</strong> {trip.customerId.name} ({trip.customerId.email})</p>
-                                        )}
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model || "N/A"}</p>
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        <div className="mt-2 flex justify-between items-center">
-                                            <p><strong>Status:</strong> <span className="text-green-600 font-bold">{trip.status || "N/A"}</span></p>
+                    {(() => {
+                        // Apply filters to driverTrips
+                        const filteredDriverTrips = driverTrips.filter(trip => {
+                            if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
+                            if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
+                            if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
+                            return true;
+                        });
+
+                        // Pagination Logic
+                        const indexOfLastItem = currentPage * itemsPerPage;
+                        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                        const currentTrips = filteredDriverTrips.slice(indexOfFirstItem, indexOfLastItem);
+
+                        return (
+                            <>
+                                <p className="text-sm text-gray-500 mb-4">
+                                    Showing {filteredDriverTrips.length > 0 ? indexOfFirstItem + 1 : 0} - {Math.min(indexOfLastItem, filteredDriverTrips.length)} of {filteredDriverTrips.length} trips
+                                </p>
+
+                                {currentTrips.length === 0 ? (
+                                    <p className="text-center text-gray-600 p-8 bg-gray-50 rounded-lg">No trips found matching the selected filters.</p>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {currentTrips.map(trip => (
+                                                <div key={trip._id} className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 flex flex-col h-full hover:shadow-xl transition-shadow duration-300">
+                                                    {/* Header: Route & Status */}
+                                                    <div className="p-5 border-b border-gray-100 bg-gray-50/50">
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="space-y-3 w-full">
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="flex flex-col items-center gap-1 mt-1">
+                                                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div>
+                                                                        <div className="w-0.5 h-8 bg-gray-200 border-l border-dashed border-gray-300"></div>
+                                                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div>
+                                                                    </div>
+                                                                    <div className="flex-1 space-y-2">
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Pick Up</p>
+                                                                            <p className="text-sm font-semibold text-gray-800 leading-tight">{trip.startLocation}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Drop Off</p>
+                                                                            <p className="text-sm font-semibold text-gray-800 leading-tight">{trip.endLocation}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${trip.tripType === 'Instant' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                {trip.tripType === 'Instant' ? '⚡ Quick' : '📅 Scheduled'}
+                                                            </span>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${trip.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                                                                trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
+                                                                    trip.status === 'Accepted' ? 'bg-blue-100 text-blue-700' :
+                                                                        trip.status === 'Pending' ? 'bg-orange-100 text-orange-700' :
+                                                                            'bg-gray-100 text-gray-600'
+                                                                }`}>
+                                                                {trip.status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Body: Details */}
+                                                    <div className="p-5 space-y-4 flex-grow">
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="bg-gray-50 p-3 rounded-lg">
+                                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Customer</p>
+                                                                <p className="font-semibold text-gray-800 truncate" title={trip.customerId?.name}>{trip.customerId?.name || "N/A"}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 p-3 rounded-lg">
+                                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Vehicle</p>
+                                                                <p className="font-semibold text-gray-800 truncate">{trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                                                            <div>
+                                                                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-0.5">Distance</p>
+                                                                <p className="font-bold text-gray-700">{trip.distance ? parseFloat(trip.distance).toFixed(1) : "0"} km</p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-0.5">Earnings</p>
+                                                                <p className="font-bold text-green-600 text-lg">Rs. {trip.price ? trip.price.toFixed(0) : "0"}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Schedule</p>
+                                                            <p className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                                                                <span>📅</span>
+                                                                {trip.date ? new Date(trip.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : "N/A"}
+                                                            </p>
+                                                        </div>
+
+                                                        {trip.notes && (
+                                                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                                                <p className="text-xs text-yellow-600 font-bold uppercase tracking-wider mb-1">Note</p>
+                                                                <p className="text-sm text-gray-700 italic">"{trip.notes}"</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Footer: Actions */}
+                                                    <div className="p-5 pt-0 mt-auto">
+                                                        {trip.status === 'Pending' && (
+                                                            <div className="flex gap-3">
+                                                                <button
+                                                                    onClick={() => handleStatusUpdateUI(trip._id!, "Accepted")}
+                                                                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-bold text-sm shadow-blue-200 shadow-lg hover:shadow-xl transition-all active:scale-95"
+                                                                >
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleRejectTrip(trip._id!)}
+                                                                    className="flex-1 bg-white text-red-500 border border-red-100 py-3 rounded-lg hover:bg-red-50 font-bold text-sm transition-all"
+                                                                >
+                                                                    Decline
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        {trip.status === 'Accepted' && (
+                                                            <div className="space-y-2">
+                                                                <button
+                                                                    onClick={() => handleStatusUpdateUI(trip._id!, "Processing")}
+                                                                    className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white py-3 rounded-lg hover:from-yellow-500 hover:to-amber-600 font-bold text-sm shadow-lg shadow-yellow-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                                                >
+                                                                    <span>▶</span> Start Trip
+                                                                </button>
+                                                                <p className="text-[10px] text-center text-gray-400 font-medium">Click when you pick up the customer</p>
+                                                            </div>
+                                                        )}
+
+                                                        {trip.status === 'Processing' && (
+                                                            <button
+                                                                onClick={() => handleStatusUpdateUI(trip._id!, "Completed")}
+                                                                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-sm shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                                            >
+                                                                <span>🏁</span> Complete Trip
+                                                            </button>
+                                                        )}
+
+                                                        {(trip.status === 'Completed' || trip.status === 'Paid') && (
+                                                            <button
+                                                                onClick={() => setInvoiceTripId(trip._id!)}
+                                                                className="w-full border-2 border-dashed border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 py-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                <span>📄</span> View Invoice
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <button
-                                            onClick={() => setInvoiceTripId(trip._id!)}
-                                            className="mt-3 w-full border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-semibold py-1.5 rounded transition"
-                                        >
-                                            View Invoice / Receipt
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                        <Pagination totalItems={filteredDriverTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} />
+                                    </>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 
@@ -1739,180 +1825,230 @@ export function Trip() {
                 <div className="p-6">
                     <h2 className="text-2xl font-bold mb-4 text-center">My Trips</h2>
 
-                    {customerTrips.length === 0 && (
-                        <p className="text-center text-gray-600">You don't have any trips at the moment.</p>
-                    )}
-
-                    {customerPendingTrips.length > 0 && (
-                        <div className="mb-8">
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Pending Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {customerPendingTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        <p><strong>Driver:</strong> {trip.driverId?.name || "N/A"}</p>
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
-                                        {trip.promoCode && (
-                                            <p className="bg-green-50 p-2 rounded border border-green-200 mt-2">
-                                                <span className="text-green-700 font-bold text-xs uppercase tracking-wider">Promo: {trip.promoCode} applied</span>
-                                                <br />
-                                                <span className="text-red-600 font-black text-lg">- Rs. {trip.discountAmount}</span>
-                                            </p>
-                                        )}
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        <p className="mt-2"><strong>Status:</strong> <span
-                                            className="text-blue-600">{trip.status}</span></p>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Filters Control Bar */}
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
+                        {/* Tabs */}
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setActiveTab('All')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                All Trips
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Instant')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Quick Rides
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Scheduled')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Scheduled Rides
+                            </button>
                         </div>
-                    )}
 
-                    {customerProcessingTrips.length > 0 && (
-                        <div className="mb-8">
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Active Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {customerProcessingTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        <p><strong>Driver:</strong> {trip.driverId?.name || "N/A"}</p>
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        {trip.promoCode && (
-                                            <div className="bg-green-50 p-2 rounded border border-green-200 mt-2">
-                                                <span className="text-green-700 font-bold text-xs uppercase tracking-wider">Promo: {trip.promoCode} applied</span>
-                                                <br />
-                                                <span className="text-red-600 font-black text-lg">- Rs. {trip.discountAmount}</span>
-                                            </div>
-                                        )}
-                                        <p className="mt-2"><strong>Status:</strong> <span
-                                            className="text-yellow-600">{trip.status}</span></p>
-                                    </div>
-                                ))}
-                            </div>
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Accepted">Accepted - Driver Found</option>
+                                <option value="Processing">Processing - In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
                         </div>
-                    )}
-
-                    {customerCompletedTrips.length > 0 && (
-                        <div className="mb-8">
-                            <h3 className="text-xl font-semibold mb-2 text-gray-700">Completed Trips</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {customerCompletedTrips.map(trip => (
-                                    <div key={trip._id}
-                                        className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                                        <h3 className="text-lg font-semibold mb-2">{trip.startLocation} → {trip.endLocation}</h3>
-                                        <p><strong>Driver:</strong> {trip.driverId?.name || "N/A"}</p>
-                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
-                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                        <p className="mt-2 text-sm"><strong>Status:</strong> <span
-                                            className="text-green-600 font-semibold">{trip.status}</span></p>
-
-                                        <button
-                                            onClick={() => setInvoiceTripId(trip._id!)}
-                                            className="mt-3 w-full border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-semibold py-1.5 rounded transition"
-                                        >
-                                            View Invoice / Receipt
-                                        </button>
-
-                                        {trip._id &&
-                                            trip.driverId?._id &&
-                                            !ratedTrips.has(trip._id) && (
-                                                <div className="flex justify-end mt-4">
-                                                    <button
-                                                        onClick={() => {
-                                                            setRatingModal({
-                                                                show: true,
-                                                                tripId: trip._id!,
-                                                                driverId: trip.driverId._id!,
-                                                                driverName: trip.driverId.name || "Driver"
-                                                            });
-                                                        }}
-                                                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                                                    >
-                                                        Rate Driver
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                        {trip._id && ratedTrips.has(trip._id) && (
-                                            <div className="mt-4">
-                                                <p className="text-sm text-gray-500 italic">✓ You have rated this trip</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {ratingModal?.show && (
-                <RatingModal
-                    tripId={ratingModal.tripId}
-                    driverId={ratingModal.driverId}
-                    driverName={ratingModal.driverName}
-                    onClose={() => setRatingModal(null)}
-                    onRatingSubmitted={() => {
-                        checkRatedTrips();
-                        dispatch(getAllTrips());
-                    }}
-                />
-            )}
-
-            {showDetailsModal && selectedTripDetails && (
-                <TripDetailsModal
-                    trip={selectedTripDetails}
-                    onClose={() => {
-                        setShowDetailsModal(false);
-                        setSelectedTripDetails(null);
-                    }}
-                />
-            )}
-
-            {invoiceTripId && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-                        <button
-                            onClick={() => setInvoiceTripId(null)}
-                            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold"
-                        >✕</button>
-                        <Invoice
-                            tripId={invoiceTripId}
-                            currentUserRole={role}
-                            onPaymentComplete={() => {
-                                // Optional: Refresh trip list if needed to update UI elsewhere
-                                dispatch(getAllTrips());
-                            }}
-                        />
                     </div>
+
+                    {(() => {
+                        // Apply filters to customerTrips
+                        const filteredCustomerTrips = customerTrips.filter(trip => {
+                            if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
+                            if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
+                            if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
+                            return true;
+                        });
+
+                        // Pagination Logic
+                        const indexOfLastItem = currentPage * itemsPerPage;
+                        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                        const currentTrips = filteredCustomerTrips.slice(indexOfFirstItem, indexOfLastItem);
+
+                        return (
+                            <>
+                                <p className="text-sm text-gray-500 mb-4">
+                                    Showing {filteredCustomerTrips.length > 0 ? indexOfFirstItem + 1 : 0} - {Math.min(indexOfLastItem, filteredCustomerTrips.length)} of {filteredCustomerTrips.length} trips
+                                </p>
+
+                                {currentTrips.length === 0 ? (
+                                    <p className="text-center text-gray-600 p-8 bg-gray-50 rounded-lg">You don't have any trips matching the selected filters.</p>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                            {currentTrips.map(trip => (
+                                                <div key={trip._id} className="bg-white shadow-md rounded-lg p-4 border border-gray-200 flex flex-col h-full">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h3 className="text-lg font-semibold">{trip.startLocation} → {trip.endLocation}</h3>
+                                                        <span className={`px-2 py-1 rounded text-xs ml-2 whitespace-nowrap ${trip.tripType === 'Instant' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                            }`}>
+                                                            {trip.tripType === 'Instant' ? 'Quick' : 'Scheduled'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex-grow space-y-1 text-sm">
+                                                        <p><strong>Driver:</strong> {trip.driverId?.name || "N/A"}</p>
+                                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
+                                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
+                                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
+                                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
+                                                        {trip.promoCode && (
+                                                            <div className="bg-green-50 p-1.5 rounded border border-green-200 mt-2">
+                                                                <span className="text-green-700 font-bold text-xs uppercase tracking-wider">Promo: {trip.promoCode}</span>
+                                                                <span className="block text-red-600 font-black text-lg">- Rs. {trip.discountAmount}</span>
+                                                            </div>
+                                                        )}
+                                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
+                                                        <p className="mt-2"><strong>Status:</strong> <span className={`font-bold ${trip.status === 'Completed' || trip.status === 'Paid' ? 'text-green-600' :
+                                                            trip.status === 'Cancelled' ? 'text-red-600' :
+                                                                'text-blue-600'
+                                                            }`}>{trip.status}</span></p>
+                                                    </div>
+
+                                                    <div className="mt-4 pt-3 border-t">
+                                                        {/* Completed/Paid Actions */}
+                                                        {(trip.status === 'Completed') && (
+                                                            <button
+                                                                onClick={() => setInvoiceTripId(trip._id!)}
+                                                                className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm font-medium mb-2"
+                                                            >
+                                                                Pay Now
+                                                            </button>
+                                                        )}
+
+                                                        {(trip.status === 'Completed' || trip.status === 'Paid') && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => setInvoiceTripId(trip._id!)}
+                                                                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-semibold py-1.5 rounded transition mb-2"
+                                                                >
+                                                                    View Invoice / Receipt
+                                                                </button>
+
+                                                                {trip._id && trip.driverId?._id && !ratedTrips.has(trip._id) && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setRatingModal({
+                                                                                show: true,
+                                                                                tripId: trip._id!,
+                                                                                driverId: trip.driverId._id!,
+                                                                                driverName: trip.driverId.name || "Driver"
+                                                                            });
+                                                                        }}
+                                                                        className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-medium"
+                                                                    >
+                                                                        Rate Driver
+                                                                    </button>
+                                                                )}
+
+                                                                {trip._id && ratedTrips.has(trip._id) && (
+                                                                    <p className="text-center text-sm text-gray-500 italic">✓ You have rated this trip</p>
+                                                                )}
+                                                            </>
+                                                        )}
+
+                                                        {trip.status === 'Pending' && (
+                                                            <p className="text-xs text-center text-gray-500 italic mt-2">Waiting for driver approval</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <Pagination totalItems={filteredCustomerTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} />
+                                    </>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 
-            {showReassignModal && reassignTripId && reassignTripDetails && (
-                <TripReassignmentModal
-                    isOpen={showReassignModal}
-                    onClose={() => {
-                        setShowReassignModal(false);
-                        setReassignTripId(null);
-                        setReassignTripDetails(null);
-                        dispatch(getAllTrips());
-                    }}
-                    tripId={reassignTripId}
-                    tripDetails={reassignTripDetails}
-                />
-            )}
+            {
+                ratingModal?.show && (
+                    <RatingModal
+                        tripId={ratingModal.tripId}
+                        driverId={ratingModal.driverId}
+                        driverName={ratingModal.driverName}
+                        onClose={() => setRatingModal(null)}
+                        onRatingSubmitted={() => {
+                            checkRatedTrips();
+                            dispatch(getAllTrips());
+                        }}
+                    />
+                )
+            }
+
+            {
+                showDetailsModal && selectedTripDetails && (
+                    <TripDetailsModal
+                        trip={selectedTripDetails}
+                        onClose={() => {
+                            setShowDetailsModal(false);
+                            setSelectedTripDetails(null);
+                        }}
+                    />
+                )
+            }
+
+            {
+                invoiceTripId && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
+                            <button
+                                onClick={() => setInvoiceTripId(null)}
+                                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold"
+                            >✕</button>
+                            <Invoice
+                                tripId={invoiceTripId}
+                                currentUserRole={role}
+                                onPaymentComplete={() => {
+                                    // Optional: Refresh trip list if needed to update UI elsewhere
+                                    dispatch(getAllTrips());
+                                }}
+                            />
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                showReassignModal && reassignTripId && reassignTripDetails && (
+                    <TripReassignmentModal
+                        isOpen={showReassignModal}
+                        onClose={() => {
+                            setShowReassignModal(false);
+                            setReassignTripId(null);
+                            setReassignTripDetails(null);
+                            dispatch(getAllTrips());
+                        }}
+                        tripId={reassignTripId}
+                        tripDetails={reassignTripDetails}
+                    />
+                )
+            }
         </>
     );
 }
+
+

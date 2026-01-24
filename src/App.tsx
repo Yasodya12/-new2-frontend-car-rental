@@ -3,6 +3,7 @@ import { DefaultLayout } from "./view/common/DefaultLayout/DefaultLayout.tsx";
 import { Login } from "./view/page/Login/Login.tsx";
 import { Register } from "./view/page/Register/Register.tsx";
 import { ForgotPassword } from "./view/page/ForgotPassword/ForgotPassword.tsx";
+import { CompleteProfile } from "./view/page/CompleteProfile/CompleteProfile.tsx";
 import { isTokenExpired, getUserFromToken } from "./auth/auth.ts";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -17,12 +18,19 @@ function App() {
         const token = localStorage.getItem('accessToken');
         if (!token || isTokenExpired(token)) {
             // Only redirect if not already on public routes
-            const publicRoutes = ['/login', '/register', '/forgot-password'];
+            const publicRoutes = ['/login', '/register', '/forgot-password', '/complete-profile'];
             if (!publicRoutes.includes(window.location.pathname)) {
                 alert('You are not logged in. Please log in to continue.');
                 navigate('/login');
             }
         } else {
+            // Check if profile is incomplete
+            const profileComplete = localStorage.getItem('profileComplete');
+            if (profileComplete === 'false' && window.location.pathname !== '/complete-profile') {
+                navigate('/complete-profile');
+                return;
+            }
+
             // Restore state from localStorage
             const userData = getUserFromToken(token);
             const role = localStorage.getItem('role');
@@ -41,6 +49,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />}></Route>
                 <Route path="/forgot-password" element={<ForgotPassword />}></Route>
+                <Route path="/complete-profile" element={<CompleteProfile />}></Route>
             </Routes>
         </>
     )

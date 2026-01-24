@@ -9,6 +9,7 @@ interface driverState {
     nearbyList: UserData[],
     loading: boolean,
     error: string | null | undefined,
+    driverStats?: any, // Added to fix type error in Trip.tsx
 }
 
 const initialState: driverState = {
