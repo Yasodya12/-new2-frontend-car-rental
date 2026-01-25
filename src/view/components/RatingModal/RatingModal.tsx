@@ -134,22 +134,42 @@ export function RatingModal({ tripId, driverId, driverName, onClose, onRatingSub
                         />
                     </div>
 
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex justify-between items-center mt-4">
                         <button
                             type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
-                            disabled={loading}
+                            onClick={async () => {
+                                if (window.confirm(`Are you sure you want to block ${driverName}? This driver will not be matched with you again.`)) {
+                                    try {
+                                        await backendApi.patch("/api/v1/user/block-driver", { driverId });
+                                        alert("Driver blocked successfully.");
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert("Failed to block driver.");
+                                    }
+                                }
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm underline"
                         >
-                            Cancel
+                            Block Driver
                         </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-                            disabled={loading || rating === 0}
-                        >
-                            {loading ? "Submitting..." : "Submit Rating"}
-                        </button>
+
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                                disabled={loading || rating === 0}
+                            >
+                                {loading ? "Submitting..." : "Submit Rating"}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

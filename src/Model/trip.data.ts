@@ -18,6 +18,7 @@ export interface TripData {
     endLng?: number;
     promoCode?: string;
     discountAmount?: number;
+    isBroadcast?: boolean;
 }
 
 export interface PopulatedTripDTO {
@@ -57,4 +58,5 @@ export interface PopulatedTripDTO {
     currentProgress?: number;
     promoCode?: string;
     discountAmount?: number;
+    isBroadcast?: boolean;
 }
