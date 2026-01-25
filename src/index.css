@@ -1,2 +1,14 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-bg-dark: #0B0F19;
+  --color-card-dark: #151A2D;
+  --color-primary: #4F9CF9;
+  --color-accent: #22C55E;
+  --color-warning: #FACC15;
+  --color-danger: #EF4444;
+  --color-text-light: #E5E7EB;
+  --color-text-muted: #9CA3AF;
+  --color-border-dark: #1F2937;
+}
