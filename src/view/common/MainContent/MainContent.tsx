@@ -18,7 +18,7 @@ export function MainContent() {
     return (
         <div className="MainContent w-full">
             <Routes>
-                <Route path="/*" element={<MainLayout><Home /></MainLayout>}></Route>
+                <Route path="/" element={<MainLayout><Home /></MainLayout>}></Route>
                 <Route path="/trips/*" element={<MainLayout><Trip /></MainLayout>}></Route>
                 <Route path="/vehicles" element={<MainLayout><Vehicle /></MainLayout>}></Route>
                 <Route path="/driver" element={<MainLayout><Driver /></MainLayout>}></Route>

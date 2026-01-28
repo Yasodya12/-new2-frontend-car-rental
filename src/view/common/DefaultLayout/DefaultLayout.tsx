@@ -28,7 +28,7 @@ export function DefaultLayout() {
     }, [dispatch, token, role]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 relative">
+        <div className="flex flex-col min-h-screen bg-bg-dark relative">
             <Navbar />
 
             <main className="flex-grow">

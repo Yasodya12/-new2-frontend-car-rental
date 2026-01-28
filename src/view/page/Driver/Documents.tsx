@@ -56,52 +56,58 @@ export function Documents() {
         const doc = getDocByType(type);
 
         return (
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-800">{title}</h3>
-                        <p className="text-sm text-gray-500">{description}</p>
-                    </div>
-                    {doc && (
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${doc.status === "Verified" ? "bg-green-100 text-green-700" :
-                            doc.status === "Rejected" ? "bg-red-100 text-red-700" :
-                                "bg-yellow-100 text-yellow-700"
+            <div className="bg-card-dark border border-border-dark rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row gap-8 items-start">
+                <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${doc?.status === 'Verified' ? 'bg-accent/20 text-accent' : 'bg-bg-dark text-text-muted'
                             }`}>
-                            {doc.status}
-                        </span>
-                    )}
-                </div>
+                            {doc?.status === 'Verified' ? '✓' : '1'}
+                        </div>
+                        <h3 className="text-xl font-bold text-text-light">{title}</h3>
+                    </div>
+                    <p className="text-sm text-text-muted mb-6 pl-13">{description}</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+                    <div className="max-w-md ml-13">
                         <ImageUpload
                             onUpload={(url) => handleUploadComplete(type, url)}
-                            label={`Upload ${title}`}
+                            label={`Select ${title} File`}
                         />
                     </div>
+                </div>
 
-                    <div className="flex flex-col justify-center border-l border-gray-100 pl-6">
+                <div className="w-full lg:w-80 space-y-4">
+                    <div className="bg-bg-dark/50 border border-border-dark rounded-xl p-4">
+                        <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-3">Verification Status</p>
                         {doc ? (
-                            <>
-                                <div className="mb-4">
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Current Preview:</p>
-                                    <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
-                                        <img
-                                            src={doc.documentUrl}
-                                            alt={type}
-                                            className="h-32 w-full object-cover rounded border hover:opacity-80 transition"
-                                        />
-                                    </a>
+                            <div className="space-y-4">
+                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold ${doc.status === 'Verified' ? 'bg-accent/10 text-accent border border-accent/20' :
+                                        doc.status === 'Rejected' ? 'bg-danger/10 text-danger border border-danger/20' :
+                                            'bg-warning/10 text-warning border border-warning/20'
+                                    }`}>
+                                    <div className={`w-2 h-2 rounded-full ${doc.status === 'Verified' ? 'bg-accent' :
+                                            doc.status === 'Rejected' ? 'bg-danger' :
+                                                'bg-warning'
+                                        }`}></div>
+                                    {doc.status}
                                 </div>
+
+                                <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer" className="block relative group rounded-xl overflow-hidden border border-border-dark shadow-inner">
+                                    <img src={doc.documentUrl} alt={type} className="h-32 w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest">View Document</span>
+                                    </div>
+                                </a>
+
                                 {doc.adminNotes && (
-                                    <div className="bg-red-50 p-3 rounded text-sm text-red-600 border border-red-100">
-                                        <strong>Admin Notes:</strong> {doc.adminNotes}
+                                    <div className="bg-danger/5 border border-danger/20 p-3 rounded-lg">
+                                        <p className="text-[10px] text-danger font-bold uppercase mb-1">Feedback</p>
+                                        <p className="text-xs text-text-muted italic">{doc.adminNotes}</p>
                                     </div>
                                 )}
-                            </>
+                            </div>
                         ) : (
-                            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-200 rounded text-gray-400 italic">
-                                No document uploaded yet
+                            <div className="py-8 text-center border-2 border-dashed border-border-dark rounded-xl">
+                                <p className="text-xs text-text-muted font-medium italic">Pending Upload</p>
                             </div>
                         )}
                     </div>
@@ -110,16 +116,31 @@ export function Documents() {
         );
     };
 
-    if (loading) return <div className="p-10 text-center">Loading documents...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-bg-dark flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     return (
-        <div className="max-w-4xl mx-auto py-10">
-            <h1 className="text-3xl font-bold mb-2 text-blue-700">Driver Verification Documents</h1>
-            <p className="text-gray-600 mb-8">Please upload clear photos of your valid documents. Our admins will review them shortly.</p>
+        <div className="min-h-screen bg-bg-dark pt-12 pb-24 px-6 lg:px-12">
+            <div className="max-w-6xl mx-auto">
+                <header className="mb-12">
+                    <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
+                        <span>Personnel</span>
+                        <span className="text-text-muted">/</span>
+                        <span>Compliance</span>
+                    </div>
+                    <h1 className="text-4xl font-extrabold text-text-light mb-3">Verification Center</h1>
+                    <p className="text-text-muted max-w-2xl font-medium">
+                        Complete your professional profile by uploading required legal documentation. Verified drivers receive priority booking allocation.
+                    </p>
+                </header>
 
-            <div className="space-y-8">
-                {renderDocumentSection("ID", "NIC / National ID", "Upload both front and back if possible in one image.")}
-                {renderDocumentSection("License", "Driving License", "Ensure the license number and expiry date are clearly visible.")}
+                <div className="space-y-8">
+                    {renderDocumentSection("ID", "National Identity Card", "Official government identification (NIC). Ensure both sides are clearly visible in the captured frame.")}
+                    {renderDocumentSection("License", "Driving Credentials", "A valid professional driving license for the registered vehicle category.")}
+                </div>
             </div>
         </div>
     );

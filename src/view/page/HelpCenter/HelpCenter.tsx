@@ -71,153 +71,189 @@ export function HelpCenter() {
     };
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-indigo-700">Help Center 🎫</h1>
+        <div className="min-h-screen bg-bg-dark pt-12 pb-24 px-6 lg:px-16">
+            {/* Command Header */}
+            <div className="max-w-[1600px] mx-auto mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-8">
+                <div className="relative">
+                    <div className="flex items-center gap-3 text-primary font-bold text-xs uppercase tracking-widest mb-3">
+                        <span className="w-8 h-[2px] bg-primary/20"></span>
+                        Communications / Service Desk
+                    </div>
+                    <h1 className="text-4xl font-extrabold text-text-light tracking-tight">
+                        Support <span className="text-primary font-black">Operations</span> Desk
+                    </h1>
+                </div>
+
                 {role !== 'admin' && (
                     <button
                         onClick={() => setShowModal(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg shadow-md font-bold transition flex items-center gap-2"
+                        className="bg-primary text-white px-8 py-3.5 rounded-xl shadow-lg shadow-primary/20 font-bold text-sm uppercase tracking-widest hover:bg-primary/90 hover:shadow-primary/30 transition-all flex items-center gap-3 self-start active:scale-[0.98]"
                     >
-                        <span>➕</span> Submit New Ticket
+                        <span className="text-xl">⊕</span>
+                        <span>Create Service Request</span>
                     </button>
                 )}
             </div>
 
+            {/* Operational Metrics Segment */}
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {[
+                    { label: "Total Requests", value: displayTickets.length, color: "text-text-light" },
+                    { label: "Active Threads", value: displayTickets.filter(t => t.status !== 'Resolved').length, color: "text-warning" },
+                    { label: "Resolution Index", value: `${displayTickets.length > 0 ? Math.round((displayTickets.filter(t => t.status === 'Resolved').length / displayTickets.length) * 100) : 0}%`, color: "text-accent" },
+                    { label: "Response Latency", value: "< 24H", color: "text-primary" }
+                ].map((stat, i) => (
+                    <div key={i} className="bg-card-dark border border-border-dark rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-bg-dark rounded-full -mr-8 -mt-8"></div>
+                        <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-2 opacity-80">{stat.label}</p>
+                        <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+                    </div>
+                ))}
+            </div>
+
             {loading ? (
-                <div className="text-center p-12 text-gray-500">Loading tickets...</div>
+                <div className="flex flex-col items-center justify-center p-24 text-text-muted gap-4">
+                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <p className="font-bold text-sm tracking-widest uppercase opacity-60">Synchronizing Record Stream...</p>
+                </div>
             ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm bg-white">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-indigo-600 text-white uppercase text-xs">
-                            <tr>
-                                <th className="px-6 py-4">Subject</th>
-                                {role === 'admin' && <th className="px-6 py-4">User</th>}
-                                <th className="px-6 py-4">Priority</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Created At</th>
-                                <th className="px-6 py-4">Admin Response</th>
-                                {role === 'admin' && <th className="px-6 py-4">Actions</th>}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {displayTickets.map((ticket) => (
-                                <tr key={ticket._id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4">
-                                        <div className="font-bold text-gray-900">{ticket.subject}</div>
-                                        <div className="text-xs text-gray-500 truncate max-w-xs">{ticket.description}</div>
-                                    </td>
-                                    {role === 'admin' && (
-                                        <td className="px-6 py-4">
-                                            <div className="text-xs font-bold">{(ticket.userId as any)?.name}</div>
-                                            <div className="text-[10px] text-gray-500">{(ticket.userId as any)?.email}</div>
-                                        </td>
+                <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {displayTickets.map((ticket) => (
+                        <div key={ticket._id} className="relative bg-card-dark border border-border-dark rounded-2xl p-8 hover:border-primary/30 hover:shadow-xl transition-all group flex flex-col">
+                            <div className="flex justify-between items-start mb-6">
+                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm ${ticket.priority === 'High' ? 'bg-danger/10 text-danger border border-danger/20' :
+                                    ticket.priority === 'Medium' ? 'bg-warning/10 text-warning border border-warning/20' :
+                                        'bg-primary/10 text-primary border border-primary/20'
+                                    }`}>
+                                    {ticket.priority} Priority
+                                </span>
+                                <div className="flex items-center gap-2 px-2.5 py-1 bg-bg-dark rounded-lg border border-border-dark">
+                                    <div className={`w-2 h-2 rounded-full ${ticket.status === 'Resolved' ? 'bg-accent' : 'bg-warning animate-pulse'}`}></div>
+                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{ticket.status}</span>
+                                </div>
+                            </div>
+
+                            <div className="mb-8 flex-grow">
+                                <h3 className="text-xl font-bold text-text-light group-hover:text-primary transition-colors mb-3 leading-tight">{ticket.subject}</h3>
+                                <div className="bg-bg-dark/50 border-l-2 border-primary/30 p-4 rounded-r-xl">
+                                    <p className="text-sm text-text-muted leading-relaxed italic font-medium">
+                                        "{ticket.description}"
+                                    </p>
+                                </div>
+                            </div>
+
+                            {role === 'admin' ? (
+                                <div className="mt-auto pt-6 border-t border-border-dark flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-bg-dark border border-border-dark flex items-center justify-center text-sm font-bold text-primary shadow-sm uppercase">
+                                            {(ticket.userId as any)?.name?.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] font-bold text-text-light uppercase tracking-tight">{(ticket.userId as any)?.name}</p>
+                                            <p className="text-[10px] text-text-muted font-semibold">{(ticket.userId as any)?.email}</p>
+                                        </div>
+                                    </div>
+                                    {ticket.status !== 'Resolved' && (
+                                        <button
+                                            onClick={() => setSelectedTicket(ticket)}
+                                            className="bg-primary text-white px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-primary/90 shadow-md shadow-primary/10 active:scale-95"
+                                        >
+                                            Respond
+                                        </button>
                                     )}
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${ticket.priority === 'High' ? 'bg-red-100 text-red-800' :
-                                            ticket.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
-                                            {ticket.priority}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${ticket.status === 'Resolved' ? 'bg-green-100 text-green-800' :
-                                            ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                            {ticket.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-600 text-xs">
-                                        {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {ticket.adminResponse ? (
-                                            <div className="text-xs text-green-700 italic">"{ticket.adminResponse}"</div>
-                                        ) : (
-                                            <span className="text-xs text-gray-400 italic">Awaiting response...</span>
-                                        )}
-                                    </td>
-                                    {role === 'admin' && (
-                                        <td className="px-6 py-4">
-                                            {ticket.status !== 'Resolved' && (
-                                                <button
-                                                    onClick={() => setSelectedTicket(ticket)}
-                                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-[10px] font-bold shadow-sm transition"
-                                                >
-                                                    Respond
-                                                </button>
-                                            )}
-                                        </td>
+                                </div>
+                            ) : (
+                                <div className="mt-auto pt-6 border-t border-border-dark">
+                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-3 opacity-60">System Feedback</p>
+                                    {ticket.adminResponse ? (
+                                        <div className="bg-accent/5 border border-accent/20 p-5 rounded-2xl relative">
+                                            <p className="text-sm text-accent italic font-semibold leading-relaxed">"{ticket.adminResponse}"</p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-bg-dark border border-border-dark border-dashed p-4 rounded-2xl">
+                                            <p className="text-xs text-text-muted italic font-medium opacity-60">Awaiting technical review...</p>
+                                        </div>
                                     )}
-                                </tr>
-                            ))}
-                            {displayTickets.length === 0 && (
-                                <tr>
-                                    <td colSpan={role === 'admin' ? 7 : 5} className="px-6 py-12 text-center text-gray-500 italic">
-                                        {role === 'admin' ? "No support tickets found in the system." : "No support tickets found. Need help? Submit a new ticket!"}
-                                    </td>
-                                </tr>
+                                </div>
                             )}
-                        </tbody>
-                    </table>
+
+                            <div className="mt-6 flex items-center justify-between text-[10px] font-bold text-text-muted uppercase tracking-widest opacity-40">
+                                <span>REF: {ticket._id?.slice(-8).toUpperCase()}</span>
+                                <span>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'UNKNOWN'}</span>
+                            </div>
+                        </div>
+                    ))}
+                    {displayTickets.length === 0 && (
+                        <div className="lg:col-span-3 py-32 text-center bg-card-dark border border-border-dark border-dashed rounded-[3rem]">
+                            <p className="text-text-muted text-sm font-semibold italic opacity-60">
+                                {role === 'admin' ? "Zero active incident streams identified." : "No active support cases identified."}
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Submit Ticket Modal */}
+            {/* Submit Request Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-                        <div className="bg-indigo-600 text-white p-5 flex justify-between items-center rounded-t-xl">
-                            <h2 className="text-xl font-bold">Submit New Ticket 🎫</h2>
-                            <button onClick={() => setShowModal(false)} className="text-2xl font-bold">&times;</button>
+                <div className="fixed inset-0 bg-text-light/10 backdrop-blur-md flex items-center justify-center z-[200] px-4">
+                    <div className="bg-card-dark border border-border-dark rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-primary p-8 text-white">
+                            <h2 className="text-2xl font-black tracking-tight uppercase tracking-widest">New Service Ticket</h2>
+                            <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">Operational Support Desk</p>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-10 space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Subject Descriptor</label>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder="Briefly describe the issue"
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-semibold"
+                                    placeholder="Brief summary of the requirement"
                                     value={formData.subject}
                                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                                <select
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    value={formData.priority}
-                                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                                >
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                </select>
+                            <div className="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Priority Classification</label>
+                                    <div className="flex gap-3">
+                                        {['Low', 'Medium', 'High'].map(level => (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, priority: level as any })}
+                                                className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${formData.priority === level
+                                                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
+                                                        : 'bg-bg-dark text-text-muted border-border-dark hover:border-text-muted/60'
+                                                    }`}
+                                            >
+                                                {level}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Case Details</label>
                                 <textarea
                                     required
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32"
-                                    placeholder="Provide detailed information about your issue"
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-32 transition-all font-medium resize-none leading-relaxed"
+                                    placeholder="Provide comprehensive operational data..."
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
-                            <div className="pt-4 flex gap-3">
+                            <div className="pt-4 flex gap-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                                    className="flex-1 px-4 py-4 border border-border-dark rounded-xl text-text-muted hover:text-text-light hover:bg-bg-dark font-bold text-xs uppercase tracking-widest transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-bold shadow-md"
+                                    className="flex-1 bg-primary text-white px-4 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98]"
                                 >
                                     Submit Ticket
                                 </button>
@@ -227,40 +263,41 @@ export function HelpCenter() {
                 </div>
             )}
 
-            {/* Resolve Modal (Admin Only) */}
+            {/* Resolution Modal (Admin Only) */}
             {selectedTicket && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-                        <div className="bg-indigo-600 text-white p-5 flex justify-between items-center rounded-t-xl">
-                            <h2 className="text-xl font-bold">Resolve Ticket</h2>
-                            <button onClick={() => setSelectedTicket(null)} className="text-2xl font-bold">&times;</button>
+                <div className="fixed inset-0 bg-text-light/20 backdrop-blur-md flex items-center justify-center z-[200] px-4">
+                    <div className="bg-card-dark border border-border-dark rounded-[2.5rem] shadow-2xl max-w-md w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-primary p-8 text-white">
+                            <h2 className="text-2xl font-black uppercase tracking-widest">Resolve Case</h2>
+                            <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">Ref: {selectedTicket._id?.slice(-8).toUpperCase()}</p>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-700">Subject: {selectedTicket.subject}</h4>
-                                <p className="text-xs text-gray-500 mt-1">{selectedTicket.description}</p>
+                        <div className="p-10 space-y-6">
+                            <div className="bg-bg-dark/50 border border-border-dark p-6 rounded-2xl relative overflow-hidden">
+                                <h4 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-3">Original Request</h4>
+                                <p className="text-sm font-bold text-text-light mb-1">{selectedTicket.subject}</p>
+                                <p className="text-xs text-text-muted italic leading-relaxed font-medium">"{selectedTicket.description}"</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Your Response</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Technical Response</label>
                                 <textarea
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32 text-sm"
-                                    placeholder="Enter your reply to the user..."
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none h-32 transition-all font-medium resize-none leading-relaxed"
+                                    placeholder="Enter terminal response..."
                                     value={adminResponse}
                                     onChange={(e) => setAdminResponse(e.target.value)}
                                 />
                             </div>
-                            <div className="pt-4 flex gap-3">
+                            <div className="flex gap-4">
                                 <button
                                     onClick={() => setSelectedTicket(null)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                                    className="flex-1 px-4 py-4 border border-border-dark rounded-xl text-text-muted hover:text-text-light hover:bg-bg-dark font-bold text-xs uppercase tracking-widest transition-all"
                                 >
-                                    Cancel
+                                    Dismiss
                                 </button>
                                 <button
                                     onClick={handleResolve}
-                                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-bold shadow-md"
+                                    className="flex-1 bg-accent text-white px-4 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-accent/20 hover:bg-accent/90 transition-all active:scale-[0.98]"
                                 >
-                                    Resolve Ticket
+                                    Finalize Close
                                 </button>
                             </div>
                         </div>

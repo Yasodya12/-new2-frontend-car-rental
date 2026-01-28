@@ -50,94 +50,94 @@ export function ChangePassword() {
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-blue-800">
-                        Update Password
+        <div className="min-h-screen bg-bg-dark flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full bg-card-dark rounded-[2.5rem] border border-border-dark p-10 shadow-xl relative overflow-hidden">
+                <div className="relative text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary text-2xl mb-4 shadow-sm">
+                        🔐
+                    </div>
+                    <h2 className="text-3xl font-extrabold text-text-light tracking-tight mb-2">
+                        Security Update
                     </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        Secure your account by choosing a strong password
+                    <p className="text-sm text-text-muted font-medium px-4">
+                        Update your credentials to maintain the operational integrity of your fleet account.
                     </p>
                 </div>
 
                 {success ? (
-                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded animate-pulse" role="alert">
-                        <p className="font-bold">Success!</p>
-                        <p>Your password has been changed successfully. Redirecting you back...</p>
+                    <div className="bg-accent/10 border border-accent/20 text-accent p-6 rounded-2xl text-center space-y-2">
+                        <p className="font-bold uppercase tracking-widest text-xs">System Synchronized</p>
+                        <p className="text-sm font-semibold italic">Credentials updated successfully. Redirecting...</p>
                     </div>
                 ) : (
-                    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         {error && (
-                            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert">
-                                <p>{error}</p>
+                            <div className="bg-danger/10 border border-danger/20 text-danger p-4 rounded-xl text-xs font-bold text-center">
+                                ERROR: {error}
                             </div>
                         )}
-                        <div className="rounded-md shadow-sm -space-y-px">
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Current Password</label>
                                 <input
                                     name="oldPassword"
                                     type="password"
                                     required
                                     value={form.oldPassword}
                                     onChange={handleChange}
-                                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition duration-200"
-                                    placeholder="Enter current password"
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm font-semibold"
+                                    placeholder="••••••••"
                                 />
                             </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <div>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">New Password</label>
                                 <input
                                     name="newPassword"
                                     type="password"
                                     required
                                     value={form.newPassword}
                                     onChange={handleChange}
-                                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition duration-200"
-                                    placeholder="Enter new password (min 6 chars)"
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm font-semibold"
+                                    placeholder="Minimum 6 characters"
                                 />
                             </div>
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                            <div>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-1">Confirm New Password</label>
                                 <input
                                     name="confirmPassword"
                                     type="password"
                                     required
                                     value={form.confirmPassword}
                                     onChange={handleChange}
-                                    className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition duration-200"
-                                    placeholder="Confirm new password"
+                                    className="w-full bg-bg-dark border border-border-dark rounded-xl px-5 py-3.5 text-sm text-text-light placeholder:text-text-muted/40 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm font-semibold"
+                                    placeholder="••••••••"
                                 />
                             </div>
                         </div>
 
-                        <div>
+                        <div className="pt-2">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:-translate-y-1 shadow-md ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className="w-full py-4 bg-primary hover:bg-primary/90 text-white text-xs font-bold uppercase tracking-widest rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 {loading ? (
-                                    <span className="flex items-center">
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
+                                    <span className="flex items-center justify-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                         Updating...
                                     </span>
-                                ) : "Update Password"}
+                                ) : "Commit Security Change"}
                             </button>
                         </div>
                     </form>
                 )}
 
-                <div className="text-center mt-4">
+                <div className="mt-8 text-center">
                     <button
                         onClick={() => navigate(-1)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-500 transition duration-150"
+                        className="text-[10px] font-bold uppercase tracking-widest text-text-muted hover:text-primary transition-colors"
                     >
-                        &larr; Go Back
+                        ← Return to Account
                     </button>
                 </div>
             </div>

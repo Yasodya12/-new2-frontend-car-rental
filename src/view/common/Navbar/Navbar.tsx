@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
-import logo from "../../../assets/logo.png";
+import { Link, useLocation } from "react-router-dom";
+
 import { useEffect, useState } from "react";
 import { getUserFromToken } from "../../../auth/auth.ts";
 import { backendApi } from "../../../api.ts";
 import { NotificationBell } from "../../components/NotificationBell.tsx";
+import { FaCar, FaChevronDown, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { HiMenu, HiX } from 'react-icons/hi';
 
 
 export interface UserData {
@@ -31,13 +33,19 @@ export interface UserData {
 }
 
 export function Navbar() {
-
     const [user, setUser] = useState<UserData | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const location = useLocation();
 
-
-
-    // ... existing imports
+    // Close all menus when location changes
+    useEffect(() => {
+        setAdminMenuOpen(false);
+        setUserMenuOpen(false);
+        setMobileMenuOpen(false);
+    }, [location]);
 
     useEffect(() => {
         const accessToken = localStorage.getItem('accessToken');
@@ -73,65 +81,234 @@ export function Navbar() {
     }, []);
 
 
+    const handleLogout = () => {
+        // Clear all session data
+        localStorage.clear();
+        // Force refresh to clear any cached states/interceptors
+        window.location.replace('/login');
+    };
+
     return (
-        <nav className="bg-blue-600 text-white shadow-md">
-            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <Link to="/" className="flex items-center text-xl font-bold space-x-2">
-                    <img src={logo} alt="logo" className="h-8 w-8 object-cover" />
-                    <span>Transport Manager</span>
-                </Link>
+        <nav className="bg-card-dark border-b border-border-dark shadow-lg relative z-[100]">
+            <div className="max-w-7xl mx-auto px-4 lg:px-6 relative z-[110]">
+                <div className="flex items-center justify-between h-16">
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary">
+                            <FaCar className="text-white" />
+                        </div>
+                        <span className="text-xl font-bold text-text-light">RideHub</span>
+                    </Link>
 
-                <div className="flex items-center space-x-6">
-                    <Link to="/" className="hover:underline">Home</Link>
-                    {user && (
-                        <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-                    )}
-                    {user && user.role === 'admin' && (
-                        <>
-                            <Link to="/live-map" className="hover:underline">Live Map 🌍</Link>
-                            <Link to="/admin/chat" className="hover:underline">Messages 💬</Link>
-                            <Link to="/admin/approvals" className="hover:underline">Driver Approvals 👤</Link>
-                        </>
-                    )}
-                    <Link to="/driver" className="hover:underline">Drivers</Link>
-                    <Link to="/trips" className="hover:underline">Trips</Link>
-                    <Link to="/vehicles" className="hover:underline">Vehicles</Link>
-                    {user && user.role === 'admin' && (
-                        <Link to="/promotions" className="hover:underline">Offers 🏷️</Link>
-                    )}
-                    {user && user.role === 'driver' && (
-                        <Link to="/documents" className="hover:underline">My Documents 📄</Link>
-                    )}
-                    {user && (
-                        <Link to="/help-center" className="hover:underline">Help Center 🎫</Link>
-                    )}
-                    {!user && (
-                        <Link to="/login" className="hover:underline">Login</Link>
-                    )}
-                </div>
-
-                <div className="flex items-center space-x-4">
-                    {/* Notification Bell */}
-                    {user && <NotificationBell />}
-
-                    {/* User Profile */}
-                    {user && (
-                        <Link to="/user">
-                            <div className="flex items-center space-x-2">
-                                {imageUrl && (
-                                    <img
-                                        src={imageUrl}
-                                        alt="Profile"
-                                        className="w-10 h-10 rounded-full border border-white object-cover"
-                                    />
-                                )}
-                                <span>{user.name}</span>
-                            </div>
+                    {/* Desktop Navigation */}
+                    <div className="hidden lg:flex items-center gap-6">
+                        <Link to="/" className="text-text-muted hover:text-primary transition-colors font-medium">
+                            Home
                         </Link>
-                    )}
-                </div>
-            </div>
-        </nav>
 
-    )
+                        {user && (
+                            <Link to="/dashboard" className="text-text-muted hover:text-primary transition-colors font-medium">
+                                Dashboard
+                            </Link>
+                        )}
+
+                        {/* Admin Dropdown */}
+                        {user && user.role === 'admin' && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                                    className="flex items-center gap-1 text-text-muted hover:text-primary transition-colors font-medium"
+                                >
+                                    Admin
+                                    <FaChevronDown className={`text-xs transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {adminMenuOpen && (
+                                    <div className="absolute top-full left-0 mt-2 w-56 bg-card-dark border border-border-dark rounded-xl shadow-2xl py-2 z-[120]">
+                                        <Link
+                                            to="/live-map"
+                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
+                                            onClick={() => setAdminMenuOpen(false)}
+                                        >
+                                            🌍 Live Map
+                                        </Link>
+                                        <Link
+                                            to="/admin/chat"
+                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
+                                            onClick={() => setAdminMenuOpen(false)}
+                                        >
+                                            💬 Messages
+                                        </Link>
+                                        <Link
+                                            to="/admin/approvals"
+                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
+                                            onClick={() => setAdminMenuOpen(false)}
+                                        >
+                                            👤 Driver Approvals
+                                        </Link>
+                                        <Link
+                                            to="/promotions"
+                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
+                                            onClick={() => setAdminMenuOpen(false)}
+                                        >
+                                            🏷️ Promotions
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Common Links */}
+                        <Link to="/trips" className="text-text-muted hover:text-primary transition-colors font-medium">
+                            Trips
+                        </Link>
+                        <Link to="/vehicles" className="text-text-muted hover:text-primary transition-colors font-medium">
+                            Vehicles
+                        </Link>
+                        {user && user.role !== 'admin' && (
+                            <Link to="/driver" className="text-text-muted hover:text-primary transition-colors font-medium">
+                                Drivers
+                            </Link>
+                        )}
+
+                        {/* Driver Specific */}
+                        {user && user.role === 'driver' && (
+                            <Link to="/documents" className="text-text-muted hover:text-primary transition-colors font-medium">
+                                Documents
+                            </Link>
+                        )}
+
+                        {/* Help Center */}
+                        {user && (
+                            <Link to="/help-center" className="text-text-muted hover:text-primary transition-colors font-medium">
+                                Help
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* Right Side */}
+                    <div className="flex items-center gap-4">
+                        {/* Notification Bell */}
+                        {user && <NotificationBell />}
+
+                        {/* User Menu */}
+                        {user ? (
+                            <div className="relative">
+                                <button
+                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                >
+                                    {imageUrl ? (
+                                        <img
+                                            src={imageUrl}
+                                            alt="Profile"
+                                            className="w-10 h-10 rounded-full border-2 border-primary object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                                            <FaUser className="text-white" />
+                                        </div>
+                                    )}
+                                    <span className="hidden lg:block text-text-light font-medium">{user.name}</span>
+                                    <FaChevronDown className={`hidden lg:block text-xs text-text-muted transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {userMenuOpen && (
+                                    <div className="absolute top-full right-0 mt-2 w-48 bg-card-dark border border-border-dark rounded-xl shadow-2xl py-2 z-[120]">
+                                        <Link
+                                            to="/user"
+                                            className="flex items-center gap-2 px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            <FaUser className="text-sm" />
+                                            Profile
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setUserMenuOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-danger transition-colors text-left"
+                                        >
+                                            <FaSignOutAlt className="text-sm" />
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-2 rounded-lg transition-all"
+                            >
+                                Login
+                            </Link>
+                        )}
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="lg:hidden text-text-light p-2"
+                        >
+                            {mobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Menu */}
+                {mobileMenuOpen && (
+                    <div className="lg:hidden border-t border-border-dark py-4 space-y-2">
+                        <Link to="/" className="block px-4 py-2 text-text-muted hover:text-primary">Home</Link>
+                        {user && <Link to="/dashboard" className="block px-4 py-2 text-text-muted hover:text-primary">Dashboard</Link>}
+                        {user && user.role === 'admin' && (
+                            <>
+                                <Link to="/live-map" className="block px-4 py-2 text-text-muted hover:text-primary">Live Map</Link>
+                                <Link to="/admin/chat" className="block px-4 py-2 text-text-muted hover:text-primary">Messages</Link>
+                                <Link to="/admin/approvals" className="block px-4 py-2 text-text-muted hover:text-primary">Driver Approvals</Link>
+                                <Link to="/promotions" className="block px-4 py-2 text-text-muted hover:text-primary">Promotions</Link>
+                            </>
+                        )}
+                        <Link to="/trips" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Trips</Link>
+                        <Link to="/vehicles" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Vehicles</Link>
+                        {user && user.role !== 'admin' && <Link to="/driver" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Drivers</Link>}
+                        {user && user.role === 'driver' && <Link to="/documents" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Documents</Link>}
+                        {user && <Link to="/help-center" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Help Center</Link>}
+
+                        {/* Mobile User Profile Section */}
+                        {user && (
+                            <div className="pt-4 mt-4 border-t border-border-dark space-y-2">
+                                <Link
+                                    to="/user"
+                                    className="flex items-center gap-3 px-4 py-2 text-text-muted hover:text-primary transition-colors"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <FaUser className="text-sm" />
+                                    <span>My Profile</span>
+                                </Link>
+                                <button
+                                    onClick={() => {
+                                        handleLogout();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-text-muted hover:text-danger transition-colors text-left"
+                                >
+                                    <FaSignOutAlt className="text-sm" />
+                                    <span>Logout Account</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Click outside to close dropdowns */}
+            {(adminMenuOpen || userMenuOpen) && (
+                <div
+                    className="fixed inset-0 z-[105] bg-black/5"
+                    onClick={() => {
+                        setAdminMenuOpen(false);
+                        setUserMenuOpen(false);
+                    }}
+                />
+            )}
+        </nav>
+    );
 }

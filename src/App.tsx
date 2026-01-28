@@ -18,7 +18,7 @@ function App() {
         const token = localStorage.getItem('accessToken');
         if (!token || isTokenExpired(token)) {
             // Only redirect if not already on public routes
-            const publicRoutes = ['/login', '/register', '/forgot-password', '/complete-profile'];
+            const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/complete-profile'];
             if (!publicRoutes.includes(window.location.pathname)) {
                 alert('You are not logged in. Please log in to continue.');
                 navigate('/login');

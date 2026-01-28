@@ -2,13 +2,19 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  --color-bg-dark: #0B0F19;
-  --color-card-dark: #151A2D;
-  --color-primary: #4F9CF9;
-  --color-accent: #22C55E;
-  --color-warning: #FACC15;
+  --color-bg-dark: #F8FAFC;
+  --color-card-dark: #FFFFFF;
+  --color-primary: #2563EB;
+  --color-accent: #10B981;
+  --color-warning: #F59E0B;
   --color-danger: #EF4444;
-  --color-text-light: #E5E7EB;
-  --color-text-muted: #9CA3AF;
-  --color-border-dark: #1F2937;
+  --color-text-light: #0F172A;
+  --color-text-muted: #64748B;
+  --color-border-dark: #E2E8F0;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-dark text-text-light antialiased;
+  }
 }

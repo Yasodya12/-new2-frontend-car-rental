@@ -47,46 +47,75 @@ export function Driver() {
     const filterTabs = isAdmin ? adminTabs : userTabs;
 
     return (
-        <>
-            <h1 className="text-center text-4xl font-black mb-2 text-blue-700 font-display">Drivers</h1>
-            <p className="text-center text-gray-500 mb-8 font-medium italic">Manage and view our elite transport professionals</p>
+        <div className="min-h-screen bg-bg-dark pt-12 pb-24 px-6 lg:px-16">
+            {/* Command Header */}
+            <div className="max-w-[1600px] mx-auto mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-8">
+                <div className="relative">
+                    <div className="flex items-center gap-3 text-primary font-bold text-xs uppercase tracking-widest mb-3">
+                        <span className="w-8 h-[2px] bg-primary/20"></span>
+                        Fleet Operations / Personnel
+                    </div>
+                    <h1 className="text-4xl font-extrabold text-text-light tracking-tight">
+                        Active Fleet <span className="text-primary font-black">Registry</span>
+                    </h1>
+                    <p className="mt-2 text-text-muted font-medium text-sm max-w-xl">
+                        Monitor and manage professional transport specialists across the operational network.
+                    </p>
+                </div>
 
-            <div className="max-w-xl mx-auto mb-8 relative">
-                <input
-                    type="text"
-                    placeholder="Search by Name, NIC, Phone, Address or ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-white shadow-xl border border-blue-100/50 outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-700 placeholder:text-gray-300"
-                />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xl grayscale opacity-30 group-focus-within:grayscale-0 group-focus-within:opacity-100 transition-all">🔍</span>
+                {/* Search Cluster */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="relative group">
+                        <input
+                            type="text"
+                            placeholder="Search operator ID or name..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full sm:w-80 bg-card-dark border border-border-dark rounded-xl px-12 py-3.5 text-sm text-text-light placeholder:text-text-muted/60 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
+                        />
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted/50 group-focus-within:text-primary transition-colors">
+                            🔍
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            <div className="flex justify-center mb-12">
-                <div className="bg-white p-1.5 rounded-2xl shadow-xl border border-blue-50/50 flex flex-wrap gap-1 justify-center">
+            {/* Tactical Filtering HUD */}
+            <div className="max-w-[1600px] mx-auto mb-12 flex flex-col md:flex-row items-center justify-between border-b border-border-dark">
+                <div className="flex gap-4 overflow-x-auto no-scrollbar w-full md:w-auto">
                     {filterTabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveFilter(tab.id)}
-                            className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 ${activeFilter === tab.id
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 -translate-y-0.5'
-                                : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                            className={`pb-4 px-4 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeFilter === tab.id
+                                ? 'text-text-light'
+                                : 'text-text-muted hover:text-text-light/60'
                                 }`}
                         >
-                            <span>{tab.icon}</span>
-                            {tab.label}
+                            <span className="text-lg">{tab.icon}</span>
+                            <span>{tab.label}</span>
+                            {activeFilter === tab.id && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_-2px_8px_rgba(37,99,235,0.3)]"></div>
+                            )}
                         </button>
                     ))}
                 </div>
+                <div className="hidden md:flex items-center gap-4 py-4">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white border border-border-dark rounded-full shadow-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+                        <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">{driverState.list.length} Records Active</span>
+                    </div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12">
+            {/* Deployment Grid */}
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
                 {
                     driverState.list
                         .filter(driver => {
                             const role = localStorage.getItem('role');
-                            if (role === 'admin') return true; // Admins see everything coming from backend
-                            return driver.isApproved; // Others only see approved drivers
+                            if (role === 'admin') return true;
+                            return driver.isApproved;
                         })
                         .map((driver) => (
                             <DriverCard
@@ -105,6 +134,6 @@ export function Driver() {
                     onClose={() => setSelectedDriver(null)}
                 />
             )}
-        </>
+        </div>
     );
 }

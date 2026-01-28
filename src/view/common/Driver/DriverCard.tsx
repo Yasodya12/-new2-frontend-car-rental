@@ -30,69 +30,76 @@ export function DriverCard({ data, onViewDetails }: driverCardProps) {
 
 
     return (
-        <div
-            className="w-[220px] h-auto rounded-2xl shadow-md border border-gray-200 bg-white p-4 hover:shadow-lg transition-all duration-300">
-            <div className="flex flex-col items-center">
-                <div className="relative">
-                    <img
-                        className="h-[100px] w-[100px] object-cover rounded-full shadow-sm"
-                        src={imageUrl || undefined}
-                        alt={data.name}
-                    />
-                    {/* Approval Status Badge - Top Right */}
-                    {data.isApproved ? (
-                        <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10">
-                            Approved
-                        </span>
-                    ) : (
-                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10">
-                            Pending
-                        </span>
-                    )}
-
-                    {/* Availability Status Badge - Top Left */}
-                    <span className={`absolute -top-1 -left-1 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10 ${data.isAvailable ? 'bg-blue-500' : 'bg-gray-500'
-                        }`}>
-                        {data.isAvailable ? 'Available' : 'Unavailable'}
-                    </span>
+        <div className="relative group overflow-hidden bg-card-dark border border-border-dark rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-1">
+            <div className="relative flex flex-col h-full">
+                {/* Header: Photo and Badges */}
+                <div className="flex items-start justify-between mb-5">
+                    <div className="relative">
+                        <img
+                            className="h-20 w-20 object-cover rounded-2xl border border-border-dark shadow-sm"
+                            src={imageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${data.name}&backgroundColor=f8fafc&textColor=0f172a`}
+                            alt={data.name}
+                        />
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-card-dark shadow-md ${data.isAvailable ? 'bg-accent' : 'bg-danger'
+                            }`}>
+                            {data.isAvailable && <div className="w-full h-full rounded-full animate-ping bg-accent opacity-30"></div>}
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${data.isApproved ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-warning/10 text-warning border border-warning/20'
+                            }`}>
+                            {data.isApproved ? 'Operational' : 'Enrolling'}
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-bg-dark px-2.5 py-1 rounded-lg border border-border-dark shadow-sm">
+                            <span className="text-warning text-xs">★</span>
+                            <span className="text-xs font-bold text-text-light">{data.averageRating?.toFixed(1) || "5.0"}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <h3 className="mt-3 text-sm font-bold text-gray-800">{data.name}</h3>
-
-                {/* Rating Section */}
-                <div className="flex items-center gap-1 mt-1">
-                    <span className="text-yellow-400 text-xs">★</span>
-                    <span className="text-xs font-semibold text-gray-700">{data.averageRating?.toFixed(1) || "New"}</span>
-                    <span className="text-[10px] text-gray-400">({data.totalRatings || 0})</span>
+                {/* Operator Profile */}
+                <div className="mb-6 flex-grow">
+                    <h3 className="text-xl font-bold text-text-light group-hover:text-primary transition-colors">
+                        {data.name}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-text-muted mt-1">
+                        <span className="text-xs">📍</span>
+                        <p className="text-[11px] font-semibold truncate" title={data.location?.address}>
+                            {data.location?.address || "Region Not Identified"}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Location Section */}
-                <div className="flex items-center gap-1 mt-1 w-full justify-center">
-                    <span className="text-[10px]">📍</span>
-                    <p className="text-[10px] text-gray-500 truncate max-w-[150px]" title={data.location?.address}>
-                        {data.location?.address || "No location set"}
-                    </p>
+                {/* Metrics Matrix */}
+                <div className="grid grid-cols-2 gap-px bg-border-dark rounded-xl overflow-hidden mb-6 border border-border-dark shadow-sm">
+                    <div className="bg-card-dark p-3 text-center">
+                        <p className="text-[9px] text-text-muted uppercase font-bold tracking-widest mb-1">XP INDEX</p>
+                        <p className="text-sm font-black text-text-light">{data.experience || 0} <span className="text-[10px] font-bold text-text-muted">Yrs</span></p>
+                    </div>
+                    <div className="bg-card-dark p-3 text-center">
+                        <p className="text-[9px] text-text-muted uppercase font-bold tracking-widest mb-1">TOTAL OPS</p>
+                        <p className="text-sm font-black text-text-light">{data.totalRatings || 0}</p>
+                    </div>
                 </div>
 
-
-
-                <button
-                    onClick={handleBookNow}
-                    className="mt-4 w-full py-[6px] bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md transition-colors duration-200"
-                >
-                    Book Now
-                </button>
-
-                {onViewDetails && (
+                {/* Tactics Cluster */}
+                <div className="flex flex-col gap-2">
                     <button
-                        onClick={onViewDetails}
-                        className="mt-2 w-full py-[6px] border border-blue-600 text-blue-600 hover:bg-blue-50 text-xs font-semibold rounded-md transition-colors duration-200"
+                        onClick={handleBookNow}
+                        className="w-full py-3.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transition-all active:scale-[0.98]"
                     >
-                        View Details
+                        Initiate Booking
                     </button>
-                )}
+                    {onViewDetails && (
+                        <button
+                            onClick={onViewDetails}
+                            className="w-full py-3 bg-bg-dark hover:bg-border-dark text-text-muted hover:text-text-light text-xs font-bold uppercase tracking-widest rounded-xl border border-border-dark transition-all"
+                        >
+                            Review Profile
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
-
-    )
+    );
 }

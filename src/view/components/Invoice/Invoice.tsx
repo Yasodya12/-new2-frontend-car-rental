@@ -81,18 +81,26 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading Invoice Details...</div>;
+    if (loading) return (
+        <div className="p-12 text-center text-text-muted">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="font-bold text-xs uppercase tracking-widest opacity-60">Retrieving Fiscal Stream...</p>
+        </div>
+    );
 
     if (!payment) {
         return (
-            <div className="bg-gray-50 p-8 rounded-lg border-2 border-dashed border-gray-300 text-center">
-                <p className="text-gray-500 mb-4 font-medium">No Invoice Generated</p>
+            <div className="bg-bg-dark/50 p-12 rounded-[2.5rem] border border-border-dark border-dashed text-center">
+                <div className="w-20 h-20 bg-card-dark rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-6 text-text-muted/20">
+                    <span className="text-4xl">📄</span>
+                </div>
+                <p className="text-text-muted mb-8 font-bold text-sm tracking-tight opacity-60">No Fiscal Record Generated</p>
                 {currentUserRole === 'driver' && (
                     <button
                         onClick={handleGenerateInvoice}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-full shadow-md transition transform hover:scale-105"
+                        className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
                     >
-                        Generate Invoice Now
+                        Generate Operational Receipt
                     </button>
                 )}
             </div>
@@ -100,132 +108,128 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
     }
 
     const isPaid = payment.status === 'Paid';
-    // Access populated trip details if available
     const tripDetails = typeof payment.tripId === 'object' ? (payment.tripId as TripData) : null;
 
     return (
-        <div className={`max-w-md mx-auto bg-white rounded-xl shadow-lg run-animation overflow-hidden border-t-8 ${isPaid ? 'border-green-500' : 'border-blue-500'}`}>
-            {/* Header */}
-            <div className={`p-6 text-center ${isPaid ? 'bg-green-50' : 'bg-blue-50'}`}>
-                <h2 className="text-2xl font-bold text-gray-800 tracking-wide">{isPaid ? 'PAYMENT RECEIPT' : 'INVOICE'}</h2>
-                <p className="text-sm text-gray-500 mt-1">ID: #{payment._id?.slice(-6).toUpperCase()}</p>
-                <div className={`mt-3 inline-block px-4 py-1 rounded-full text-sm font-bold tracking-wide shadow-sm ${isPaid ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'}`}>
+        <div className={`max-w-md mx-auto bg-card-dark rounded-[2.5rem] md:rounded-[3rem] shadow-2xl overflow-hidden border border-border-dark relative transition-all ${isPaid ? 'ring-2 ring-accent/10' : 'ring-2 ring-primary/10'}`}>
+            {/* Header Identity */}
+            <div className={`p-6 md:p-10 text-center relative overflow-hidden ${isPaid ? 'bg-accent/5' : 'bg-primary/5'}`}>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-card-dark rounded-full -mr-16 -mt-16 opacity-50"></div>
+                <h2 className="text-xl md:text-2xl font-black text-text-light tracking-tight uppercase tracking-widest mb-1">{isPaid ? 'Payment Receipt' : 'Service Invoice'}</h2>
+                <p className="text-[9px] text-text-muted font-black tracking-[0.2em] mb-4 opacity-40">REF: {payment._id?.slice(-8).toUpperCase()}</p>
+
+                <div className={`inline-flex items-center gap-2 px-6 py-1.5 rounded-full text-[9px] font-black tracking-widest shadow-sm ${isPaid ? 'bg-accent text-white' : 'bg-primary text-white'}`}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
                     {payment.status.toUpperCase()}
                 </div>
             </div>
 
-            {/* Bill Details */}
-            <div className="p-6 space-y-4">
-                {/* Trip Route */}
+            {/* Core Bill Details */}
+            <div className="p-6 md:p-10 space-y-6 md:space-y-8">
+                {/* Tactical Route HUD */}
                 {tripDetails && (
-                    <div className="mb-6 relative pl-4 border-l-2 border-gray-300 space-y-4">
-                        <div className="relative">
-                            <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-500 ring-2 ring-white"></div>
-                            <p className="text-xs text-gray-500 uppercase font-semibold">From</p>
-                            <p className="text-gray-800 font-medium">{tripDetails.startLocation}</p>
+                    <div className="bg-bg-dark/50 rounded-2xl md:rounded-3xl p-5 md:p-6 border border-border-dark space-y-3 md:space-y-4 shadow-inner">
+                        <div className="flex items-start gap-3">
+                            <div className="w-2 h-2 rounded-full bg-accent mt-1.5 shadow-[0_0_8px_rgba(37,99,235,0.4)]"></div>
+                            <div>
+                                <p className="text-[8px] text-text-muted font-black uppercase tracking-widest mb-0.5 opacity-60">Origin</p>
+                                <p className="text-sm font-bold text-text-light leading-tight">{tripDetails.startLocation}</p>
+                            </div>
                         </div>
-                        <div className="relative">
-                            <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-green-500 ring-2 ring-white"></div>
-                            <p className="text-xs text-gray-500 uppercase font-semibold">To</p>
-                            <p className="text-gray-800 font-medium">{tripDetails.endLocation}</p>
+                        <div className="w-px h-4 bg-border-dark ml-1 opacity-50 border-l border-dashed"></div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-2 h-2 rounded-full bg-danger mt-1.5 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+                            <div>
+                                <p className="text-[8px] text-text-muted font-black uppercase tracking-widest mb-0.5 opacity-60">Termination</p>
+                                <p className="text-sm font-bold text-text-light leading-tight">{tripDetails.endLocation}</p>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
-                    <div className="col-span-2 border-b border-gray-200 pb-2 mb-2">
-                        <p className="text-gray-500 text-xs uppercase tracking-wide">Trip ID</p>
-                        <p className="font-mono font-bold text-gray-700">
-                            {tripDetails?._id || (typeof payment.tripId === 'string' ? payment.tripId : 'N/A')}
+                <div className="grid grid-cols-2 gap-4 md:gap-6 pb-6 border-b border-border-dark">
+                    <div>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Operational ID</p>
+                        <p className="font-mono text-xs font-black text-text-light">
+                            #{tripDetails?._id?.slice(-8) || (typeof payment.tripId === 'string' ? payment.tripId.slice(-8) : 'N/A')}
                         </p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Date</p>
-                        <p className="font-semibold text-gray-800">
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Timestamp</p>
+                        <p className="text-xs font-bold text-text-light">
                             {new Date(payment.createdAt || "").toLocaleDateString()}
                         </p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Distance</p>
-                        <p className="font-semibold text-gray-800">
-                            {tripDetails?.distance || "N/A"}
-                        </p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Method</p>
+                        <p className="text-xs font-bold text-text-light uppercase tracking-widest">{payment.method}</p>
                     </div>
                     <div>
-                        <p className="text-gray-500">Method</p>
-                        <p className="font-semibold text-gray-800">{payment.method}</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Telemetry</p>
+                        <p className="text-xs font-bold text-text-light">{tripDetails?.distance || "0"} KM</p>
                     </div>
-                    {isPaid && payment.collectedAt && (
-                        <div>
-                            <p className="text-gray-500">Paid On</p>
-                            <p className="font-semibold text-gray-800">
-                                {new Date(payment.collectedAt).toLocaleDateString()}
-                            </p>
-                        </div>
-                    )}
                 </div>
 
-                {/* Total */}
-                <div className="border-t border-dashed border-gray-300 pt-4 mt-2 space-y-2">
+                {/* Fiscal Wrap */}
+                <div className="space-y-4">
                     {tripDetails?.discountAmount && tripDetails.discountAmount > 0 ? (
-                        <>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Subtotal</span>
-                                <span className="text-gray-700 font-medium">LKR {(payment.amount + tripDetails.discountAmount).toFixed(2)}</span>
+                        <div className="space-y-2 pb-4 border-b border-border-dark border-dashed">
+                            <div className="flex justify-between items-center text-[9px] uppercase font-bold tracking-widest text-text-muted">
+                                <span>Sub-Total</span>
+                                <span>LKR {(payment.amount + tripDetails.discountAmount).toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-green-600 font-medium flex items-center gap-1">
-                                    Discount 🏷️ ({tripDetails.promoCode})
-                                </span>
-                                <span className="text-green-600 font-medium">- LKR {tripDetails.discountAmount.toFixed(2)}</span>
+                            <div className="flex justify-between items-center text-[9px] uppercase font-bold tracking-widest text-accent">
+                                <span className="flex items-center gap-2">Promo ({tripDetails.promoCode})</span>
+                                <span>- LKR {tripDetails.discountAmount.toFixed(2)}</span>
                             </div>
-                        </>
+                        </div>
                     ) : null}
-                    <div className="flex justify-between items-end pt-2">
-                        <span className="text-gray-600 font-bold">Total Amount</span>
-                        <span className="text-3xl font-bold text-gray-900">
-                            LKR <span className={`${isPaid ? 'text-green-600' : 'text-blue-600'}`}>{payment.amount.toFixed(2)}</span>
-                        </span>
+
+                    <div className="flex justify-between items-end bg-bg-dark/30 p-4 rounded-2xl border border-border-dark/50 shadow-sm">
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] opacity-60">Total Settlement</p>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-[10px] font-black text-text-muted uppercase">LKR</span>
+                                <span className={`text-3xl font-black ${isPaid ? 'text-accent' : 'text-primary'}`}>
+                                    {payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="p-6 bg-gray-50 border-t border-gray-100">
+            {/* Actions Block */}
+            <div className="p-6 md:p-10 bg-bg-dark/30 border-t border-border-dark">
                 {!isPaid && currentUserRole === 'driver' && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                            <span className="text-sm font-medium text-gray-600">Payment Method:</span>
+                    <div className="space-y-5">
+                        <div className="flex items-center justify-between bg-card-dark p-3 rounded-xl border border-border-dark shadow-sm">
+                            <span className="text-[9px] font-black text-text-muted uppercase tracking-widest px-2">Vector:</span>
                             <select
                                 value={selectedMethod}
                                 onChange={(e) => setSelectedMethod(e.target.value as any)}
-                                className="text-sm font-bold text-gray-800 bg-transparent border-none focus:ring-0 cursor-pointer outline-none"
+                                className="text-[11px] font-black text-text-light bg-transparent border-none focus:ring-0 cursor-pointer outline-none uppercase tracking-widest"
                             >
-                                <option value="Cash">Cash 💵</option>
-                                <option value="Bank Transfer">Bank Transfer 🏦</option>
+                                <option value="Cash">Cash Settlement</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
                             </select>
                         </div>
                         <button
                             onClick={handleCollectPayment}
-                            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] text-[10px] uppercase tracking-[0.2em]"
                         >
-                            Confirm {selectedMethod} Collection
+                            Finalize {selectedMethod} Collection
                         </button>
-                    </div>
-                )}
-
-                {!isPaid && currentUserRole === 'customer' && (
-                    <div className="text-center p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
-                        ⚠️ Please settle the <strong>LKR {payment.amount}</strong> payment with your driver directly.
                     </div>
                 )}
 
                 {isPaid && (
                     <button
                         onClick={() => window.print()}
-                        className="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
+                        className="w-full bg-card-dark border border-border-dark text-text-light font-black py-4 px-6 rounded-xl hover:bg-bg-dark transition shadow-sm text-[9px] uppercase tracking-widest active:scale-95 flex items-center justify-center gap-3"
                     >
-                        Download / Print Receipt 🖨️
+                        <span>🖨️</span>
+                        <span>Download Physical Manifest</span>
                     </button>
                 )}
             </div>

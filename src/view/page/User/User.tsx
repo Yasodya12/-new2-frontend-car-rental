@@ -83,121 +83,173 @@ export function User() {
     };
 
     return (
-        <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg">
-            <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">User Profile</h1>
+        <div className="min-h-screen bg-bg-dark pt-12 pb-24 px-6 lg:px-16">
+            {/* Command Header */}
+            <div className="max-w-[1400px] mx-auto mb-12">
+                <div className="flex items-center gap-3 text-primary font-bold text-xs uppercase tracking-widest mb-4">
+                    <span className="w-8 h-[2px] bg-primary/20"></span>
+                    Personnel / Account Settings
+                </div>
+                <h1 className="text-4xl font-extrabold text-text-light tracking-tight">
+                    User <span className="text-primary font-black">Profile</span> Dashboard
+                </h1>
+            </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                {/* Left Sidebar */}
+                <div className="lg:col-span-4 space-y-8">
+                    <div className="bg-card-dark border border-border-dark rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-bg-dark rounded-full -mr-8 -mt-8"></div>
 
-                <div className="flex justify-center mb-6">
-                    <div className="w-full max-w-sm">
-                        <ImageUpload
-                            onUpload={handleImageUpload}
-                            initialImage={getInitialImage()}
-                            label="Profile Picture"
-                        />
+                        <div className="relative flex flex-col items-center text-center">
+                            <div className="relative mb-8 pt-4">
+                                <div className="absolute -inset-2 bg-primary/5 rounded-[2rem] blur-md"></div>
+                                <div className="w-full max-w-sm relative">
+                                    <ImageUpload
+                                        onUpload={handleImageUpload}
+                                        initialImage={getInitialImage()}
+                                        label="Update Photo"
+                                    />
+                                </div>
+                            </div>
+
+                            <h2 className="text-2xl font-black text-text-light tracking-tight mb-2 uppercase leading-none">{userData.name}</h2>
+                            <div className="inline-flex items-center gap-2 bg-bg-dark border border-border-dark px-4 py-1.5 rounded-full mb-8">
+                                <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
+                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Verified {userData.role}</span>
+                            </div>
+
+                            <div className="w-full pt-8 border-t border-border-dark space-y-4">
+                                <Link to="/change-password"
+                                    className="flex items-center justify-center gap-3 w-full py-4 bg-bg-dark hover:bg-border-dark text-text-light text-[11px] font-bold uppercase tracking-widest rounded-2xl border border-border-dark transition-all shadow-sm group/btn">
+                                    <span className="text-xl group-hover/btn:scale-110 transition-transform">🔐</span>
+                                    Security Parameters
+                                </Link>
+                                <button onClick={handleDelete}
+                                    className="flex items-center justify-center gap-2 w-full py-3 text-danger/60 hover:text-danger text-[10px] font-bold uppercase tracking-widest transition-all">
+                                    Deactivate Operational Account
+                                </button>
+                            </div>
+                        </div>
                     </div>
+
+                    {userData.role === "driver" && (
+                        <div className="bg-card-dark border border-border-dark rounded-[2rem] p-8 shadow-lg">
+                            <h3 className="text-xs font-bold text-text-muted mb-6 uppercase tracking-widest opacity-60">System Status</h3>
+                            <div className={`p-6 rounded-2xl border transition-all ${userData.isAvailable !== false ? 'bg-accent/5 border-accent/20' : 'bg-danger/5 border-danger/20'
+                                }`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${userData.isAvailable !== false ? 'text-accent' : 'text-danger'
+                                        }`}>
+                                        {userData.isAvailable !== false ? 'Online & Ready' : 'Offline / Idle'}
+                                    </span>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={userData.isAvailable !== false}
+                                            onChange={(e) => setUserData(prev => ({ ...prev, isAvailable: e.target.checked }))}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent shadow-inner"></div>
+                                    </label>
+                                </div>
+                                <p className="text-[11px] text-text-muted italic leading-relaxed font-medium">
+                                    {userData.isAvailable !== false
+                                        ? "Your terminal is currently broadcasting availability to the dispatch network."
+                                        : "Hidden from search. You will not receive any new sortie requests."}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div>
-                    <label className="block mb-1 font-medium text-gray-700">Name</label>
-                    <input type="text" name="name" value={userData.name}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
+                {/* Right Content */}
+                <div className="lg:col-span-8 space-y-10">
+                    <form onSubmit={handleSubmit} className="space-y-10">
+                        {/* Information Vector */}
+                        <div className="bg-card-dark border border-border-dark rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden">
+                            <h3 className="text-xl font-bold text-text-light mb-10 flex items-center gap-4">
+                                <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-sm shadow-sm">👤</span>
+                                Personal Identification Stream
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {[
+                                    { label: "Legal Name", name: "name", value: userData.name, type: "text", disabled: false },
+                                    { label: "Email Terminal", name: "email", value: userData.email, type: "email", disabled: true },
+                                    { label: "Identification (NIC)", name: "nic", value: userData.nic || "", type: "text", disabled: false },
+                                    { label: "Contact Secondary", name: "contactNumber", value: userData.contactNumber || "", type: "text", disabled: false }
+                                ].map((field, i) => (
+                                    <div key={i}>
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3 px-1">{field.label}</label>
+                                        <input
+                                            type={field.type}
+                                            name={field.name}
+                                            value={field.value}
+                                            onChange={handleChange}
+                                            disabled={field.disabled}
+                                            className={`w-full bg-bg-dark border border-border-dark rounded-xl px-6 py-3.5 text-sm font-bold text-text-light focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm ${field.disabled ? 'opacity-50 cursor-not-allowed bg-card-dark/50' : ''}`}
+                                            required
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-12 grid grid-cols-2 gap-6 bg-bg-dark border border-border-dark p-6 rounded-3xl border-dashed">
+                                <div>
+                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Birth Record</p>
+                                    <p className="text-sm font-bold text-text-light tracking-wide px-1">
+                                        {(() => {
+                                            if (!userData.dateOfBirth) return "STREAM_PENDING";
+                                            if (typeof userData.dateOfBirth === "string" && userData.dateOfBirth.includes("-")) {
+                                                const [year, month, day] = userData.dateOfBirth.split("-");
+                                                return `${day}/${month}/${year}`;
+                                            }
+                                            return new Date(userData.dateOfBirth).toLocaleDateString();
+                                        })()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Gender Class</p>
+                                    <p className="text-sm font-bold text-text-light tracking-wide uppercase px-1">{userData.gender || "STREAM_PENDING"}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Location HUD */}
+                        {userData.role === "driver" && (
+                            <div className="bg-card-dark border border-border-dark rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden">
+                                <h3 className="text-xl font-bold text-text-light mb-10 flex items-center gap-4">
+                                    <span className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent text-sm shadow-sm">📍</span>
+                                    Operational Geolocation
+                                </h3>
+                                <div className="space-y-8">
+                                    <div className="bg-bg-dark rounded-2xl overflow-hidden border border-border-dark p-2">
+                                        <LocationPicker
+                                            label="Base Station Coordinate"
+                                            onLocationSelect={(lat: number, lng: number, address: string) => {
+                                                setUserData(prev => ({
+                                                    ...prev,
+                                                    location: { lat, lng, address }
+                                                }));
+                                            }}
+                                            initialLocation={userData.location && userData.location.lat && userData.location.lng ? { lat: userData.location.lat, lng: userData.location.lng } : undefined}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Finalize Action */}
+                        <div className="flex justify-end pt-6">
+                            <button type="submit"
+                                className="bg-primary text-white px-16 py-4.5 rounded-[2rem] shadow-xl shadow-primary/20 font-black text-[11px] uppercase tracking-[0.2em] hover:bg-primary/90 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                                Commit Profile Dimensions
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                <div>
-                    <label className="block mb-1 font-medium text-gray-700">Email Address</label>
-                    <input type="email" name="email" value={userData.email}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block mb-1 font-medium text-gray-700">NIC Number</label>
-                        <input type="text" name="nic" value={userData.nic || ""}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" required />
-                    </div>
-                    <div>
-                        <label className="block mb-1 font-medium text-gray-700">Mobile Number</label>
-                        <input type="text" name="contactNumber" value={userData.contactNumber || ""}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" required />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100 italic text-sm text-gray-600">
-                    <div>
-                        <span className="font-semibold not-italic">Date of Birth:</span> {
-                            (() => {
-                                if (!userData.dateOfBirth) return "Extracted from NIC";
-                                if (typeof userData.dateOfBirth === "string" && userData.dateOfBirth.includes("-")) {
-                                    const [year, month, day] = userData.dateOfBirth.split("-");
-                                    return `${day}/${month}/${year}`;
-                                }
-                                return new Date(userData.dateOfBirth).toLocaleDateString();
-                            })()
-                        }
-                    </div>
-                    <div>
-                        <span className="font-semibold not-italic">Gender:</span> {userData.gender || "Extracted from NIC"}
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                    <div>
-                        <h3 className="font-semibold text-blue-800">Security</h3>
-                        <p className="text-sm text-gray-600">Update your password to keep your account safe</p>
-                    </div>
-                    <Link to="/change-password"
-                        className="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition duration-300 shadow-sm font-medium">
-                        Change Password
-                    </Link>
-                </div>
-
-                {userData.role === "driver" && (
-                    <LocationPicker
-                        label="Base Location"
-                        onLocationSelect={(lat: number, lng: number, address: string) => {
-                            setUserData(prev => ({
-                                ...prev,
-                                location: { lat, lng, address }
-                            }));
-                        }}
-                        initialLocation={userData.location && userData.location.lat && userData.location.lng ? { lat: userData.location.lat, lng: userData.location.lng } : undefined}
-                    />
-                )}
-
-                {userData.role === "driver" && (
-                    <div className="mt-4 p-4 border rounded-lg bg-blue-50 border-blue-100">
-                        <label className="flex items-center space-x-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={userData.isAvailable !== false}
-                                onChange={(e) => setUserData(prev => ({ ...prev, isAvailable: e.target.checked }))}
-                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                            />
-                            <span className="font-medium text-gray-800">Available for Trips</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1 ml-8">
-                            When disabled, you won't appear in search results for new trips.
-                        </p>
-                    </div>
-                )}
-
-                <div className="flex justify-between mt-4">
-                    <button type="submit"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow-md">
-                        Update Profile
-                    </button>
-
-                    <button type="button" onClick={handleDelete}
-                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow-md">
-                        Delete Account
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     );
 }

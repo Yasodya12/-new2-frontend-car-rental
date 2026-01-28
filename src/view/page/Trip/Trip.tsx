@@ -1,11 +1,11 @@
-import { useEffect, useState, type ChangeEvent, useRef } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { backendApi } from "../../../api";
 import type { PopulatedTripDTO, TripData } from "../../../Model/trip.data.ts";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../store/store.ts";
 import { getAllDrivers, getDriversNearby } from "../../../slices/driverSlices.ts";
 import { getAllVehicles, getVehiclesNearby } from "../../../slices/vehicleSlices.ts";
-import { getAllTrips, rejectTrip } from "../../../slices/TripSlice.ts";
+import { getAllTrips } from "../../../slices/TripSlice.ts";
 import { getUserFromToken } from "../../../auth/auth.ts";
 import { getUserByEmail } from "../../../slices/UserSlices.ts";
 import { useLocation } from "react-router-dom";
@@ -17,8 +17,10 @@ import { getRouteDistance } from "../../../utils/mapUtils.ts";
 import type { UserData } from "../../../Model/userData.ts";
 import type { VehicleData } from "../../../Model/vehicleData.ts";
 import { TripReassignmentModal } from "../../components/TripReassignmentModal.tsx";
-
 import { Invoice } from "../../components/Invoice/Invoice.tsx";
+
+import { FaCar, FaClock, FaCalendarAlt, FaRoute, FaUser, FaStickyNote, FaCheckCircle } from 'react-icons/fa';
+import { HiArrowRight, HiTruck } from 'react-icons/hi';
 
 // Helper functions for datetime-local (works in browser's local timezone)
 const toLocalDateTimeString = (utcDateString: string): string => {
@@ -33,17 +35,45 @@ const toLocalDateTimeString = (utcDateString: string): string => {
 };
 
 const fromLocalDateTimeString = (localDateTimeString: string): string => {
-    // Convert local datetime-local string to UTC ISO string
-    // datetime-local format: "YYYY-MM-DDTHH:mm"
-    // We need to parse this as local time, not UTC
     const [datePart, timePart] = localDateTimeString.split('T');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hours, minutes] = timePart.split(':').map(Number);
-
-    // Create date in local timezone
     const date = new Date(year, month - 1, day, hours, minutes);
     return date.toISOString();
 };
+
+// --- Sub-Components ---
+
+const Pagination = ({ totalItems, currentPage, onPageChange, itemsPerPage }: { totalItems: number, currentPage: number, onPageChange: (page: number) => void, itemsPerPage: number }) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="flex justify-center mt-12 gap-3">
+            <button
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-6 py-2.5 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${currentPage === 1 ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200 shadow-sm active:scale-95'}`}
+            >
+                Prev
+            </button>
+            <div className="flex items-center px-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+                    Mission Page <span className="text-blue-600">{currentPage}</span> / {totalPages}
+                </span>
+            </div>
+            <button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-6 py-2.5 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${currentPage === totalPages ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200 shadow-sm active:scale-95'}`}
+            >
+                Next
+            </button>
+        </div>
+    );
+};
+
+
 
 export function Trip() {
     const [tripData, setTripData] = useState<TripData>({
@@ -68,7 +98,6 @@ export function Trip() {
     const dispatch = useDispatch<AppDispatch>();
     const [isUpdating, setIsUpdating] = useState(false);
     const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
-    const formRef = useRef<HTMLDivElement | null>(null);
 
     const accessToken = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -98,8 +127,8 @@ export function Trip() {
 
     const [localTrips, setLocalTrips] = useState<PopulatedTripDTO[]>([]);
     const [startProvince, setStartProvince] = useState<string>("");
+    const [endProvince, setEndProvince] = useState<string>("");
     // const [startDistrict, setStartDistrict] = useState<string>("");
-    // const [endProvince, setEndProvince] = useState<string>("");
     // const [endDistrict, setEndDistrict] = useState<string>("");
     const [ratingModal, setRatingModal] = useState<{
         show: boolean;
@@ -123,27 +152,56 @@ export function Trip() {
 
     // Reassignment Modal State
     const location = useLocation();
-    const [showReassignModal, setShowReassignModal] = useState(false);
     const [reassignTripId, setReassignTripId] = useState<string | null>(null);
     const [reassignTripDetails, setReassignTripDetails] = useState<{
         startLocation: string;
         endLocation: string;
         price: number;
         date: string;
-        endDate?: string | null;
-        startLat?: number;
-        startLng?: number;
+        endDate?: string;
+        startLat: number;
+        startLng: number;
     } | null>(null);
-
-    // Promo Code State
+    const [showReassignModal, setShowReassignModal] = useState<boolean>(false);
+    const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+    const [promoError, setPromoError] = useState<string | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState("All");
     const [promoCodeInput, setPromoCodeInput] = useState("");
     const [appliedPromo, setAppliedPromo] = useState<{
         code: string;
         discountAmount: number;
         newTotal: number;
     } | null>(null);
-    const [isValidatingPromo, setIsValidatingPromo] = useState(false);
-    const [promoError, setPromoError] = useState<string | null>(null);
+
+    const availableCategories = ["All", "Economy", "Standard", "Premium", "Luxury"];
+
+    const handleApplyPromo = async () => {
+        if (!promoCodeInput) {
+            setPromoError("Please enter a promo code.");
+            return;
+        }
+        if (!tripData.price || tripData.price <= 0) {
+            setPromoError("Please calculate trip price first.");
+            return;
+        }
+
+        setIsValidatingPromo(true);
+        setPromoError(null);
+        try {
+            const response = await backendApi.post("/api/v1/promos/apply", {
+                code: promoCodeInput,
+                originalPrice: tripData.price,
+            });
+            setAppliedPromo(response.data);
+            setTripData(prev => ({ ...prev, price: response.data.newTotal }));
+        } catch (error: any) {
+            setPromoError(error.response?.data?.message || "Failed to apply promo code.");
+            setAppliedPromo(null);
+        } finally {
+            setIsValidatingPromo(false);
+        }
+    };
+
 
     // Use nearby lists if start location is selected, otherwise use all
     // Filter out unavailable drivers
@@ -152,11 +210,7 @@ export function Trip() {
 
     const vehicles = startCoords ? vehicleState.nearbyList : vehicleState.list;
 
-    // Filter vehicles by category
-    const [selectedCategory, setSelectedCategory] = useState<string>("All");
-
-    // Get unique categories from available vehicles
-    const availableCategories = ["All", ...Array.from(new Set(vehicles.map(v => v.category || "Standard")))];
+    // Redundant declarations removed
 
     const filteredVehicles = selectedCategory === "All"
         ? vehicles
@@ -173,33 +227,7 @@ export function Trip() {
         setCurrentPage(1);
     }, [activeTab, filterStatus]);
 
-    // Simple Pagination Component
-    const Pagination = ({ totalItems, currentPage, onPageChange }: { totalItems: number, currentPage: number, onPageChange: (page: number) => void }) => {
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        if (totalPages <= 1) return null;
 
-        return (
-            <div className="flex justify-center mt-6 gap-2">
-                <button
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-1 rounded border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
-                >
-                    Prev
-                </button>
-                <span className="flex items-center px-2 text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                </span>
-                <button
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className={`px-3 py-1 rounded border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
-                >
-                    Next
-                </button>
-            </div>
-        );
-    };
 
     // Filter trips based on inputs
     const getFilteredTrips = () => {
@@ -249,26 +277,6 @@ export function Trip() {
         }
     );
 
-    // Helper function to format date display with endDate if present and different
-    const formatTripDate = (trip: PopulatedTripDTO) => {
-        if (!trip.date) return "N/A";
-        const startDate = new Date(trip.date);
-        const startDateStr = startDate.toLocaleString();
-
-        if (trip.endDate) {
-            const endDate = new Date(trip.endDate);
-            const startDateOnly = startDate.toDateString();
-            const endDateOnly = endDate.toDateString();
-
-            // If endDate is different from start date, show both
-            if (startDateOnly !== endDateOnly) {
-                return `${startDateStr} - ${endDate.toLocaleString()}`;
-            }
-        }
-
-        return startDateStr;
-    };
-
     useEffect(() => {
         // Initialize Quick Ride mode with current date
         const now = new Date();
@@ -304,7 +312,7 @@ export function Trip() {
     // Check which trips have been rated
     const checkRatedTrips = async () => {
         try {
-            if (user?.role === "customer" && user._id && localTrips.length > 0) {
+            if (user?.role?.toLowerCase() === "customer" && user._id && localTrips.length > 0) {
                 const customerCompleted = localTrips.filter(
                     (trip) => trip.customerId && trip.customerId._id && user._id && trip.customerId._id === user._id && (trip.status === "Completed" || trip.status === "Paid")
                 );
@@ -340,22 +348,25 @@ export function Trip() {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const reassignTripIdParam = params.get('reassign');
+        const tripIdFromParams = params.get("tripId"); // Get tripId from params
 
         if (reassignTripIdParam && localTrips.length > 0) {
             console.log("Reassign Param detected:", reassignTripIdParam);
-            const trip = localTrips.find(t => t._id === reassignTripIdParam);
+            // Use tripIdFromParams if available, otherwise fallback to reassignTripIdParam
+            const tripToFind = tripIdFromParams || reassignTripIdParam;
+            const trip = localTrips.find(t => t._id === tripToFind);
             console.log("Trip found for reassign:", trip?._id, "Status:", trip?.status);
 
             if (trip && trip.status?.toLowerCase() === 'rejected') {
-                setReassignTripId(reassignTripIdParam);
+                setReassignTripId(tripToFind); // Use the ID that was found
                 setReassignTripDetails({
                     startLocation: trip.startLocation,
                     endLocation: trip.endLocation,
                     price: trip.price || 0,
                     date: trip.date,
-                    endDate: trip.endDate,
-                    startLat: trip.startLat,
-                    startLng: trip.startLng
+                    endDate: trip.endDate || undefined,
+                    startLat: trip.startLat || 0,
+                    startLng: trip.startLng || 0
                 });
                 setShowReassignModal(true);
             }
@@ -374,7 +385,7 @@ export function Trip() {
         return "";
     };
 
-    // Update startProvince when startAddress changes (for driver sorting)
+    // Update provinces when addresses change (for route-specific driver sorting)
     useEffect(() => {
         if (startAddress) {
             const province = extractProvinceFromAddress(startAddress);
@@ -382,7 +393,14 @@ export function Trip() {
         } else {
             setStartProvince("");
         }
-    }, [startAddress]);
+
+        if (endAddress) {
+            const province = extractProvinceFromAddress(endAddress);
+            setEndProvince(province);
+        } else {
+            setEndProvince("");
+        }
+    }, [startAddress, endAddress]);
 
     // Fetch nearby drivers and vehicles when start location is selected
     useEffect(() => {
@@ -421,37 +439,71 @@ export function Trip() {
         }
     }, [drivers, tripData.driverId, driverState.loading]);
 
-    // Auto-select best driver when start location is chosen and list is loaded
+    // Calculate route-specific expertise score for a driver
+    const calculateRouteExpertise = (driver: UserData, startProv: string, endProv: string): number => {
+        if (!driver.provincesVisited || driver.provincesVisited.length === 0) return 0;
+
+        // Get trip counts for start and end provinces
+        const startExp = driver.provincesVisited.find(p => p.province === startProv)?.count || 0;
+        const endExp = driver.provincesVisited.find(p => p.province === endProv)?.count || 0;
+
+        // If same province (e.g., Colombo to Colombo), just return the count
+        if (startProv === endProv) {
+            return startExp * 10;
+        }
+
+        // For different provinces, prioritize drivers who know BOTH areas
+        // min() ensures balanced experience, sum gives overall route exposure
+        // Formula: min(start, end) * 10 + (start + end)
+        // This heavily weights drivers with experience in BOTH provinces
+        return Math.min(startExp, endExp) * 10 + (startExp + endExp);
+    };
+
+    // Auto-select best driver based on route-specific expertise
+    // Re-runs when route changes (endProvince) to update suggestion
     useEffect(() => {
-        if (startCoords && drivers.length > 0 && !tripData.driverId && !driverState.loading) {
-            // Sorting logic to find the "Best"
+        if (startCoords && drivers.length > 0 && !driverState.loading) {
+            // Route-specific sorting logic
             const sortedDrivers = [...drivers].sort((a, b) => {
                 const aRating = a.averageRating || 0;
                 const bRating = b.averageRating || 0;
                 const aExp = a.experience || 0;
                 const bExp = b.experience || 0;
 
-                // Province Expert priority
-                if (startProvince) {
-                    const aVisitCount = (driverState.driverStats?.experienceByProvince?.[startProvince] || 0);
-                    const bVisitCount = (driverState.driverStats?.experienceByProvince?.[startProvince] || 0);
-                    if (aVisitCount !== bVisitCount) return bVisitCount - aVisitCount;
+                // 1. Route Expertise - Highest priority if both provinces are known
+                if (startProvince && endProvince) {
+                    const aRouteScore = calculateRouteExpertise(a, startProvince, endProvince);
+                    const bRouteScore = calculateRouteExpertise(b, startProvince, endProvince);
+                    if (aRouteScore !== bRouteScore) {
+                        console.log(`Route expertise: ${a.name} = ${aRouteScore}, ${b.name} = ${bRouteScore}`);
+                        return bRouteScore - aRouteScore;
+                    }
+                } else if (startProvince) {
+                    // Fallback to start province only if end is unknown
+                    const aStartExp = a.provincesVisited?.find(p => p.province === startProvince)?.count || 0;
+                    const bStartExp = b.provincesVisited?.find(p => p.province === startProvince)?.count || 0;
+                    if (aStartExp !== bStartExp) return bStartExp - aStartExp;
                 }
 
-                // Top Rated priority
+                // 2. Rating - Secondary priority
                 if (aRating !== bRating) return bRating - aRating;
 
-                // Experience tie-breaker
+                // 3. General Experience - Tiebreaker
                 return bExp - aExp;
             });
 
             if (sortedDrivers.length > 0) {
                 const bestDriver = sortedDrivers[0];
-                setTripData(prev => ({ ...prev, driverId: bestDriver._id || "" }));
-                console.log("Automatically suggested best driver:", bestDriver.name);
+                // Auto-select if no driver chosen, or if route changed (endProvince changed)
+                if (!tripData.driverId || (startProvince && endProvince)) {
+                    setTripData(prev => ({ ...prev, driverId: bestDriver._id || "" }));
+                    console.log("Route-based suggestion:", bestDriver.name,
+                        "| Route score:", calculateRouteExpertise(bestDriver, startProvince, endProvince),
+                        "| Route:", startProvince, "→", endProvince);
+                }
             }
         }
-    }, [drivers, startCoords, tripData.driverId, driverState.loading, startProvince, driverState.driverStats]);
+    }, [drivers, startCoords, driverState.loading, startProvince, endProvince]);
 
     // Reset selected vehicle if they are no longer in the filtered list
     useEffect(() => {
@@ -629,57 +681,6 @@ export function Trip() {
         }
     };
 
-    const handleRejectTrip = async (tripId: string) => {
-        if (!window.confirm("Are you sure you want to decline this trip?")) return;
-
-        try {
-            await dispatch(rejectTrip({ tripId, reason: "Declined by driver" })).unwrap();
-
-            // Update local state
-            setLocalTrips(prev =>
-                prev.map(trip =>
-                    trip._id === tripId
-                        ? { ...trip, status: "Rejected" }
-                        : trip
-                )
-            );
-            alert("Trip declined successfully");
-        } catch (err: any) {
-            alert(err || "Failed to decline trip");
-        }
-    };
-
-
-    const handleApplyPromo = async () => {
-        if (!promoCodeInput.trim()) return;
-        if (!tripData.price) {
-            alert("Please select a vehicle and locations first to calculate base price.");
-            return;
-        }
-
-        setIsValidatingPromo(true);
-        setPromoError(null);
-
-        try {
-            const res = await backendApi.post("/api/v1/promotions/validate", {
-                code: promoCodeInput,
-                tripAmount: tripData.price + (appliedPromo ? appliedPromo.discountAmount : 0) // Validate against base price
-            });
-
-            setAppliedPromo(res.data);
-            setTripData(prev => ({
-                ...prev,
-                price: res.data.newTotal
-            }));
-            alert("Promo code applied successfully!");
-        } catch (error: any) {
-            setPromoError(error.response?.data?.message || "Invalid promo code");
-            setAppliedPromo(null);
-        } finally {
-            setIsValidatingPromo(false);
-        }
-    };
-
     const handleRemovePromo = () => {
         if (appliedPromo) {
             setTripData(prev => ({
@@ -793,8 +794,8 @@ export function Trip() {
             setPromoError(null);
             setTripMode("Quick Ride");
             setStartProvince("");
+            setEndProvince("");
             // setStartDistrict("");
-            // setEndProvince("");
             // setEndDistrict("");
             setStartCoords(null);
             setEndCoords(null);
@@ -810,1296 +811,1094 @@ export function Trip() {
 
     // Trip Details Modal Component
     const TripDetailsModal = ({ trip, onClose }: { trip: PopulatedTripDTO; onClose: () => void }) => (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
-                <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-lg flex justify-between items-center">
-                    <h2 className="text-2xl font-bold">Trip Details</h2>
-                    <button onClick={onClose} className="text-white hover:text-gray-200 text-3xl font-bold">&times;</button>
+        <div className="fixed inset-0 bg-[#0B0F1A]/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 lg:p-8" onClick={onClose}>
+            <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.12)] max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4 relative border border-white/20" onClick={(e) => e.stopPropagation()}>
+                {/* Header Contextual Label */}
+                <div className="absolute top-8 right-12 z-20">
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] shadow-sm ${trip.status === "Completed" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
+                        trip.status === "Processing" ? "bg-amber-50 text-amber-600 border border-amber-100" :
+                            trip.status === "Accepted" ? "bg-blue-50 text-blue-600 border border-blue-100" :
+                                trip.status === "Pending" ? "bg-orange-50 text-orange-600 border border-orange-100" :
+                                    "bg-gray-50 text-gray-600 border border-gray-100"
+                        }`}>
+                        {trip.status || "Status Unknown"}
+                    </span>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    {/* Trip Status Badge */}
-                    <div className="flex justify-center">
-                        <span className={`px-4 py-2 rounded-full text-sm font-semibold ${trip.status === "Completed" ? "bg-green-100 text-green-800" :
-                            trip.status === "Processing" ? "bg-yellow-100 text-yellow-800" :
-                                trip.status === "Accepted" ? "bg-blue-100 text-blue-800" :
-                                    trip.status === "Pending" ? "bg-orange-100 text-orange-800" :
-                                        "bg-gray-100 text-gray-800"
-                            }`}>
-                            {trip.status || "N/A"}
-                        </span>
-                    </div>
-
-                    {/* Route Information */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Route</h3>
-                        <div className="flex items-center gap-3">
-                            <span className="text-green-600 font-semibold">📍 {trip.startLocation}</span>
-                            <span className="text-gray-400">→</span>
-                            <span className="text-red-600 font-semibold">📍 {trip.endLocation}</span>
+                <div className="p-10 lg:p-14">
+                    <div className="flex items-center gap-4 mb-10">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <FaRoute className="text-white text-xl" />
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Distance:</span>
-                                <p className="font-semibold">{trip.distance || "N/A"} km</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Price:</span>
-                                <p className="font-semibold text-green-600">Rs. {trip.price || "N/A"}</p>
-                            </div>
+                        <div>
+                            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Mission Metadata</h2>
+                            <p className="text-gray-400 text-sm font-semibold uppercase tracking-widest mt-1">Trip Reference: {trip._id?.slice(-8)}</p>
                         </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {/* Customer Information */}
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                <span className="text-blue-600">👤</span> Customer Information
-                            </h3>
-                            {trip.customerId ? (
-                                <div className="space-y-2">
-                                    <div>
-                                        <span className="text-sm text-gray-600">Name:</span>
-                                        <p className="font-semibold">{trip.customerId.name}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-gray-600">Email:</span>
-                                        <p className="font-semibold text-blue-600">{trip.customerId.email}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-gray-600">Customer ID:</span>
-                                        <p className="font-mono text-xs text-gray-500">{trip.customerId._id}</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No customer assigned</p>
-                            )}
-                        </div>
+                    <div className="space-y-10">
+                        {/* High-Fidelity Route Visualization */}
+                        <div className="bg-gray-50/50 rounded-[2rem] p-8 border border-gray-100 relative overflow-hidden">
+                            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-blue-100 rounded-full blur-[80px] opacity-30"></div>
 
-                        {/* Driver Information */}
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                <span className="text-green-600">🚗</span> Driver Information
-                            </h3>
-                            {trip.driverId ? (
-                                <div className="space-y-2">
-                                    <div>
-                                        <span className="text-sm text-gray-600">Name:</span>
-                                        <p className="font-semibold">{trip.driverId.name}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-gray-600">Email:</span>
-                                        <p className="font-semibold text-green-600">{trip.driverId.email}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-gray-600">Driver ID:</span>
-                                        <p className="font-mono text-xs text-gray-500">{trip.driverId._id}</p>
+                            <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex gap-4">
+                                        <div className="mt-1 flex flex-col items-center gap-1">
+                                            <div className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></div>
+                                            <div className="w-0.5 h-12 bg-gradient-to-b from-emerald-200 to-red-200"></div>
+                                            <div className="w-3 h-3 rounded-full bg-red-500 ring-4 ring-red-50"></div>
+                                        </div>
+                                        <div className="flex-1 space-y-6">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Departure Point</p>
+                                                <p className="text-lg font-bold text-gray-900 leading-tight">{trip.startLocation}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Destination Vector</p>
+                                                <p className="text-lg font-bold text-gray-900 leading-tight">{trip.endLocation}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No driver assigned</p>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Vehicle Information */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                            <span className="text-purple-600">🚙</span> Vehicle Information
-                        </h3>
-                        {trip.vehicleId ? (
-                            <div className="grid md:grid-cols-3 gap-4">
-                                <div>
-                                    <span className="text-sm text-gray-600">Brand:</span>
-                                    <p className="font-semibold">{trip.vehicleId.brand}</p>
-                                </div>
-                                <div>
-                                    <span className="text-sm text-gray-600">Model:</span>
-                                    <p className="font-semibold">{trip.vehicleId.model}</p>
-                                </div>
-                                <div>
-                                    <span className="text-sm text-gray-600">Name:</span>
-                                    <p className="font-semibold">{trip.vehicleId.name}</p>
-                                </div>
-                                <div className="md:col-span-3">
-                                    <span className="text-sm text-gray-600">Vehicle ID:</span>
-                                    <p className="font-mono text-xs text-gray-500">{trip.vehicleId._id}</p>
+                                <div className="w-full md:w-auto flex md:flex-col gap-4">
+                                    <div className="flex-1 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Radius</p>
+                                        <p className="text-2xl font-black text-gray-900">{trip.distance || "0"}<span className="text-sm font-bold ml-1">KM</span></p>
+                                    </div>
+                                    <div className="flex-1 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gross Yield</p>
+                                        <p className="text-2xl font-black text-emerald-600">Rs. {trip.price?.toLocaleString() || "0"}</p>
+                                    </div>
                                 </div>
                             </div>
-                        ) : (
-                            <p className="text-gray-500 italic">No vehicle assigned</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Entity Profiles */}
+                            <div className="space-y-4">
+                                <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] px-2">Operator & Unit</h4>
+                                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-6">
+                                    {trip.driverId && (
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                                <FaUser />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Commanding Driver</p>
+                                                <p className="font-bold text-gray-900">{trip.driverId.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {trip.vehicleId && (
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
+                                                <FaCar />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Assigned Asset</p>
+                                                <p className="font-bold text-gray-900">{trip.vehicleId.brand} {trip.vehicleId.model}</p>
+                                                <p className="text-[11px] text-gray-500 font-medium">{trip.vehicleId.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] px-2">Temporal data</h4>
+                                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Scheduled Start</p>
+                                            <p className="font-bold text-gray-900">{trip.date ? new Date(trip.date).toLocaleString() : "N/A"}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                            <FaClock />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Inbound/Type</p>
+                                            <p className="font-bold text-gray-900 capitalize">{trip.tripType} Operation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Notes Section */}
+                        {trip.notes && (
+                            <div className="bg-amber-50/50 rounded-3xl p-6 border border-amber-100 flex gap-4">
+                                <div className="mt-1 text-amber-500"><FaStickyNote /></div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-1">Operational Directives</p>
+                                    <p className="text-gray-700 font-medium italic">"{trip.notes}"</p>
+                                </div>
+                            </div>
                         )}
                     </div>
 
-                    {/* Trip Timeline */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                            <span className="text-orange-600">📅</span> Trip Timeline
-                        </h3>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Booking Date:</span>
-                                <p className="font-semibold">{trip.createdAt ? new Date(trip.createdAt).toLocaleString() : "N/A"}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Trip Type:</span>
-                                <p className="font-semibold">
-                                    <span className={`px-2 py-1 rounded text-xs ${trip.tripType === "Instant" ? "bg-orange-100 text-orange-800" : "bg-blue-100 text-blue-800"
-                                        }`}>
-                                        {trip.tripType === "Instant" ? "Quick Ride" : "Extended Trip"}
-                                    </span>
-                                </p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Start Date & Time:</span>
-                                <p className="font-semibold">{trip.date ? new Date(trip.date).toLocaleString() : "N/A"}</p>
-                            </div>
-                            {trip.endDate && (
-                                <div>
-                                    <span className="text-sm text-gray-600">End Date & Time:</span>
-                                    <p className="font-semibold">{new Date(trip.endDate).toLocaleString()}</p>
-                                </div>
-                            )}
+                    <div className="mt-14 pt-8 border-t border-gray-100 flex justify-between items-center">
+                        <div className="flex gap-4">
+                            <button
+                                onClick={onClose}
+                                className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold text-sm transition-all active:scale-[0.98] shadow-xl shadow-gray-200"
+                            >
+                                Secure Details
+                            </button>
                         </div>
+                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.3em]">Fleet v5.0.2</p>
                     </div>
-
-                    {/* Additional Notes */}
-                    {trip.notes && (
-                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                                <span className="text-yellow-600">📝</span> Notes
-                            </h3>
-                            <p className="text-gray-700">{trip.notes}</p>
-                        </div>
-                    )}
-
-                    {/* Trip ID */}
-                    <div className="border-t pt-4">
-                        <span className="text-sm text-gray-600">Trip ID:</span>
-                        <p className="font-mono text-xs text-gray-500">{trip._id}</p>
-                    </div>
-                </div>
-
-                <div className="sticky bottom-0 bg-gray-100 p-4 rounded-b-lg flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold"
-                    >
-                        Close
-                    </button>
                 </div>
             </div>
         </div>
     );
 
-    return (
-        <>
-            {role !== "driver" && (
-                <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-                    <h1 className="text-3xl font-bold text-blue-700 mb-6 text-center">
-                        {isUpdating ? "Update Trip" : "Add Trip"}
-                    </h1>
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium">Driver</label>
-                            {!startCoords && (
-                                <p className="text-xs text-orange-600 mb-1">
-                                    ⚠️ Please select a start location first to see nearby drivers (within 5km)
-                                </p>
-                            )}
-                            {startCoords && startProvince && (
-                                <p className="text-xs text-blue-600 mb-1">
-                                    💡 Showing drivers within 5km. Drivers with experience in <strong>{startProvince}</strong> are shown first
-                                </p>
-                            )}
-                            {startCoords && !startProvince && (
-                                <p className="text-xs text-green-600 mb-1">
-                                    ✓ Showing drivers within 5km of start location
-                                </p>
-                            )}
-                            {driverState.loading ? (
-                                <p className="text-sm text-gray-600">Loading nearby drivers...</p>
-                            ) : driverState.error ? (
-                                <p className="text-red-500">{driverState.error}</p>
-                            ) : drivers.length === 0 && startCoords ? (
-                                <p className="text-sm text-orange-600">No drivers available within 5km of the start location</p>
-                            ) : (
-                                <select
-                                    name="driverId"
-                                    value={tripData.driverId}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                    required
-                                    disabled={!startCoords}
-                                >
-                                    <option value="">Select Driver</option>
-                                    {drivers.length === 0 && !startCoords ? (
-                                        <option value="" disabled>Select start location first</option>
-                                    ) : (
-                                        [...drivers]
-                                            .map(driver => {
-                                                const rating = driver.averageRating || 0;
-                                                const totalRatings = driver.totalRatings || 0;
-                                                const experience = driver.experience || 0;
-                                                const provincesVisited = driver.provincesVisited || [];
+    const renderTripCard = (trip: PopulatedTripDTO, isMarketplace: boolean) => {
+        const status = trip.status?.toLowerCase() || 'pending';
+        const isCompleted = status === 'completed' || status === 'paid';
+        const isProcessing = status === 'processing';
+        const isAccepted = status === 'accepted';
+        const isPending = status === 'pending';
 
-                                                // Check if driver is a local expert for the selected start province
-                                                // provincesVisited is now array of objects {province: string, count: number}
-                                                const visitData = startProvince ? (provincesVisited as { province: string; count: number }[]).find(p => p.province === startProvince) : undefined;
-                                                const visitCount = visitData ? visitData.count : 0;
-                                                const isLocalExpert = visitCount > 0;
+        return (
+            <div
+                key={trip._id}
+                onClick={() => { setSelectedTripDetails(trip); setShowDetailsModal(true); }}
+                className="group relative bg-white/70 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-[0_30px_70px_rgba(59,130,246,0.1)] hover:-translate-y-2 transition-all duration-500 cursor-pointer overflow-hidden border-gray-100"
+            >
+                {/* Ambient Background Glow */}
+                <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-[80px] opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${isCompleted ? 'bg-emerald-400' : isProcessing ? 'bg-amber-400' : isAccepted ? 'bg-blue-400' : 'bg-gray-400'}`}></div>
 
-                                                // Check if driver is top rated (4.5+ rating & experience)
-                                                const isTopRated = rating >= 4.5 && experience >= 10;
+                <div className="relative z-10">
+                    {/* Actions Overlay */}
+                    <div className="absolute top-0 right-0 flex flex-col gap-3 z-20">
+                        {isCompleted && user?.role?.toLowerCase() === 'customer' && !ratedTrips.has(trip._id!) && (
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setRatingModal({ show: true, tripId: trip._id!, driverId: trip.driverId?._id!, driverName: trip.driverId?.name! }); }}
+                                className="w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center shadow-lg shadow-accent/20 hover:scale-110 transition-transform active:scale-95"
+                                title="Mission Feedback"
+                            >
+                                ⭐
+                            </button>
+                        )}
+                        {isCompleted && (
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setInvoiceTripId(trip._id!); }}
+                                className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-110 transition-transform active:scale-95"
+                                title="Fiscal Receipt"
+                            >
+                                📄
+                            </button>
+                        )}
+                    </div>
 
-                                                // Calculate sort priority: Local Experts (1), Top Rated (2), Others (3)
-                                                let sortPriority = 3;
-                                                if (isLocalExpert) {
-                                                    sortPriority = 1; // Local Experts first
-                                                } else if (isTopRated) {
-                                                    sortPriority = 2; // Top Rated second
-                                                }
-
-                                                return {
-                                                    driver,
-                                                    sortPriority,
-                                                    rating,
-                                                    experience,
-                                                    isLocalExpert,
-                                                    isTopRated,
-                                                    totalRatings,
-                                                    provincesVisited,
-                                                    visitCount
-                                                };
-                                            })
-                                            .sort((a, b) => {
-                                                // First sort by priority (Local Experts > Top Rated > Others)
-                                                if (a.sortPriority !== b.sortPriority) {
-                                                    return a.sortPriority - b.sortPriority;
-                                                }
-
-                                                // Within same priority, sort by rating
-                                                if (a.rating !== b.rating) {
-                                                    return b.rating - a.rating; // Higher rating first
-                                                }
-
-                                                // Then by experience
-                                                return b.experience - a.experience; // Higher experience first
-                                            })
-                                            .map(({ driver, rating, totalRatings, experience, isLocalExpert, isTopRated, visitCount }) => {
-
-                                                // Build recommendation text
-                                                let recommendation = "";
-                                                if (isLocalExpert && startProvince) {
-                                                    recommendation = ` 🏆 Expert in ${startProvince}`;
-                                                    if (visitCount > 1) {
-                                                        recommendation += ` (${visitCount} trips)`;
-                                                    }
-                                                } else if (isTopRated) {
-                                                    recommendation = " ⭐ Highly Recommended";
-                                                } else if (rating >= 4.0 && experience >= 5) {
-                                                    recommendation = " ✓ Recommended";
-                                                }
-
-                                                return (
-                                                    <option key={driver._id} value={driver._id}>
-                                                        {driver.name}
-                                                        {` (⭐ ${rating.toFixed(1)}${totalRatings > 0 ? `, ${totalRatings} reviews` : ''}, ${experience} trips)`}
-                                                        {recommendation}
-                                                    </option>
-                                                );
-                                            })
-                                    )}
-                                </select>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium">Vehicle</label>
-
-                            {/* Vehicle Category Filter */}
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {availableCategories.map(cat => (
-                                    <button
-                                        key={cat}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedCategory(cat);
-                                            // Reset selected vehicle when changing category filter if current selection is hidden
-                                            if (tripData.vehicleId) {
-                                                const currentVehicle = vehicles.find(v => v._id === tripData.vehicleId);
-                                                if (currentVehicle && (currentVehicle.category || "Standard") !== cat && cat !== "All") {
-                                                    setTripData(prev => ({ ...prev, vehicleId: "" }));
-                                                }
-                                            }
-                                        }}
-                                        className={`px-3 py-1 text-xs rounded-full border ${selectedCategory === cat
-                                            ? "bg-blue-600 text-white border-blue-600"
-                                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-                                            }`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
+                    <div className="flex justify-between items-start mb-8">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-lg transition-transform duration-500 group-hover:rotate-12 ${isCompleted ? 'bg-emerald-50 text-emerald-600 shadow-emerald-200/50' :
+                                isProcessing ? 'bg-amber-50 text-amber-600 shadow-amber-200/50' :
+                                    isAccepted ? 'bg-blue-50 text-blue-600 shadow-blue-200/50' :
+                                        'bg-gray-50 text-gray-400 shadow-gray-200/50'
+                                }`}>
+                                <FaRoute />
                             </div>
-
-                            {!startCoords && (
-                                <p className="text-xs text-orange-600 mb-1">
-                                    ⚠️ Please select a start location first to see nearby vehicles (within 5km)
-                                </p>
-                            )}
-                            {startCoords && (
-                                <p className="text-xs text-green-600 mb-1">
-                                    ✓ Showing {selectedCategory === "All" ? "all" : selectedCategory} vehicles within 5km of start location
-                                </p>
-                            )}
-                            {vehicleState.loading ? (
-                                <p className="text-sm text-gray-600">Loading nearby vehicles...</p>
-                            ) : vehicleState.error ? (
-                                <p className="text-red-500">{vehicleState.error}</p>
-                            ) : filteredVehicles.length === 0 && startCoords ? (
-                                <p className="text-sm text-orange-600">No {selectedCategory !== "All" ? selectedCategory : ""} vehicles found within 5km</p>
-                            ) : (
-                                <select
-                                    name="vehicleId"
-                                    value={tripData.vehicleId}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                    required
-                                    disabled={!startCoords}
-                                >
-                                    <option value="">Select {selectedCategory !== "All" ? selectedCategory : ""} Vehicle</option>
-                                    {filteredVehicles.length === 0 && !startCoords ? (
-                                        <option value="" disabled>Select start location first</option>
-                                    ) : (
-                                        filteredVehicles.map(vehicle => (
-                                            <option key={vehicle._id} value={vehicle._id}>
-                                                {vehicle.brand} - {vehicle.model} ({vehicle.category || "Standard"} - Rs. {vehicle.pricePerKm || (vehicle.category === "Economy" ? 50 : vehicle.category === "Luxury" ? 150 : vehicle.category === "Premium" ? 250 : 80)}/km)
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
-                            )}
-
-                            {/* Selected Vehicle Preview Card */}
-                            {tripData.vehicleId && (
-                                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg flex gap-4 items-center">
-                                    {/* Find selected vehicle details */}
-                                    {(() => {
-                                        const selectedVehicle = vehicles.find(v => v._id === tripData.vehicleId);
-                                        if (!selectedVehicle) return null;
-
-                                        const price = selectedVehicle.pricePerKm || (selectedVehicle.category === "Economy" ? 50 : selectedVehicle.category === "Luxury" ? 150 : selectedVehicle.category === "Premium" ? 250 : 80);
-
-                                        return (
-                                            <>
-                                                <div className="w-20 h-20 bg-white rounded-md border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                    {selectedVehicle.image ? (
-                                                        <img
-                                                            src={`http://localhost:3000/uploads/vehicle/${selectedVehicle.image}`}
-                                                            alt={selectedVehicle.model}
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLImageElement).src = "https://placehold.co/100x100?text=No+Image";
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <span className="text-2xl">🚗</span>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h4 className="font-semibold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h4>
-                                                            <span className={`text-xs px-2 py-0.5 rounded-full ${selectedVehicle.category === 'Premium' ? 'bg-purple-100 text-purple-800' :
-                                                                selectedVehicle.category === 'Luxury' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    selectedVehicle.category === 'Economy' ? 'bg-green-100 text-green-800' :
-                                                                        'bg-blue-100 text-blue-800'
-                                                                }`}>
-                                                                {selectedVehicle.category || "Standard"}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <span className="block font-bold text-green-600">Rs. {price}/km</span>
-                                                            <span className="text-xs text-gray-500">{selectedVehicle.seats} Seats</span>
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{selectedVehicle.description}</p>
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <LocationPicker
-                                label="Start Location"
-                                onLocationSelect={(lat, lng, address) => {
-                                    setStartCoords({ lat, lng });
-                                    setStartAddress(address);
-                                    setTripData(prev => ({ ...prev, startLocation: address }));
-                                }}
-                            />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <LocationPicker
-                                label="End Location"
-                                onLocationSelect={(lat, lng, address) => {
-                                    setEndCoords({ lat, lng });
-                                    setEndAddress(address);
-                                    setTripData(prev => ({ ...prev, endLocation: address }));
-                                }}
-                            />
-                        </div>
-
-                        {/* Trip Mode Tabs */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium mb-2">Trip Type</label>
-                            <div className="flex border-b border-gray-200">
-                                <button
-                                    type="button"
-                                    onClick={() => handleTripModeChange("Quick Ride")}
-                                    className={`px-6 py-3 font-medium text-sm ${tripMode === "Quick Ride"
-                                        ? "border-b-2 border-blue-600 text-blue-600"
-                                        : "text-gray-500 hover:text-gray-700"
-                                        }`}
-                                >
-                                    Quick Ride
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleTripModeChange("Extended Trip")}
-                                    className={`px-6 py-3 font-medium text-sm ${tripMode === "Extended Trip"
-                                        ? "border-b-2 border-blue-600 text-blue-600"
-                                        : "text-gray-500 hover:text-gray-700"
-                                        }`}
-                                >
-                                    Extended Trip
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Quick Ride Mode - Auto-set to Now, hide endDate */}
-                        {tripMode === "Quick Ride" && (
                             <div>
-                                <label className="block text-sm font-medium">Trip Date & Time</label>
-                                <input
-                                    type="text"
-                                    value={tripData.date ? new Date(tripData.date).toLocaleString() : new Date().toLocaleString()}
-                                    disabled
-                                    className="w-full border border-gray-300 px-3 py-2 rounded-md bg-gray-100"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Trip will start immediately (current time)</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Vector ID</p>
+                                <p className="text-xs font-black text-gray-900 tracking-wider">#{trip._id?.slice(-8).toUpperCase()}</p>
                             </div>
-                        )}
-
-                        {/* Extended Trip Mode - Show Start Date and End Date */}
-                        {tripMode === "Extended Trip" && (
-                            <>
-                                <div>
-                                    <label className="block text-sm font-medium">Start Date & Time</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="date"
-                                        value={tripData.date
-                                            ? toLocalDateTimeString(tripData.date)
-                                            : toLocalDateTimeString(new Date().toISOString())}
-                                        onChange={(e) => {
-                                            const selectedDateTime = e.target.value;
-                                            if (selectedDateTime) {
-                                                setTripData(prev => ({ ...prev, date: fromLocalDateTimeString(selectedDateTime) }));
-                                            }
-                                        }}
-                                        className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                        required
-                                        min={toLocalDateTimeString(new Date().toISOString())}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium">End Date & Time (Optional)</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="endDate"
-                                        value={tripData.endDate
-                                            ? toLocalDateTimeString(tripData.endDate)
-                                            : ""}
-                                        onChange={(e) => {
-                                            const selectedDateTime = e.target.value;
-                                            if (selectedDateTime) {
-                                                setTripData(prev => ({ ...prev, endDate: fromLocalDateTimeString(selectedDateTime) }));
-                                            } else {
-                                                setTripData(prev => ({ ...prev, endDate: "" }));
-                                            }
-                                        }}
-                                        className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                        min={tripData.date ? toLocalDateTimeString(tripData.date) : toLocalDateTimeString(new Date().toISOString())}
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Leave empty for same-day trips</p>
-                                </div>
-                            </>
-                        )}
-
-                        <div>
-                            <label className="block text-sm font-medium">Distance (km)</label>
-                            <input
-                                type="text"
-                                name="distance"
-                                value={isCalculatingDistance ? "Calculating..." : tripData.distance}
-                                onChange={handleChange}
-                                readOnly={!!startCoords && !!endCoords}
-                                className={`w-full border border-gray-300 px-3 py-2 rounded-md ${startCoords && endCoords ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                            />
-                            {startCoords && endCoords && (
-                                <p className="text-xs text-gray-500 mt-1">Distance is automatically calculated from selected locations</p>
-                            )}
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">Price (LKR)</label>
-                            <input
-                                type="number"
-                                name="price"
-                                readOnly
-                                value={tripData.price}
-                                onChange={handleChange}
-                                className="w-full border border-gray-300 px-3 py-2 rounded-md bg-gray-50 font-bold text-green-700"
-                            />
-                            {appliedPromo && (
-                                <p className="text-xs text-green-600 mt-1 font-semibold">
-                                    ✓ Discount of Rs. {appliedPromo.discountAmount} applied!
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <label className="block text-sm font-medium text-blue-800 mb-2">Have a Promo Code? 🏷️</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Enter code (e.g. SAVE10)"
-                                    className="flex-1 border border-blue-200 px-3 py-2 rounded-md uppercase font-mono"
-                                    value={promoCodeInput}
-                                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                                    disabled={!!appliedPromo || isValidatingPromo}
-                                />
-                                {appliedPromo ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleRemovePromo}
-                                        className="bg-red-100 text-red-600 px-4 py-2 rounded-md hover:bg-red-200 font-semibold transition"
-                                    >
-                                        Remove
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={handleApplyPromo}
-                                        disabled={!promoCodeInput || isValidatingPromo}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-semibold disabled:opacity-50 transition"
-                                    >
-                                        {isValidatingPromo ? "Verifying..." : "Apply"}
-                                    </button>
-                                )}
-                            </div>
-                            {promoError && <p className="text-xs text-red-600 mt-2">❌ {promoError}</p>}
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium">Notes</label>
-                            <textarea
-                                name="notes"
-                                value={tripData.notes || ""}
-                                onChange={handleChange}
-                                rows={3}
-                                className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                placeholder="Optional notes or special instructions"
-                            />
-                        </div>
-
-                        {isUpdating && (
-                            <div>
-                                <label className="block text-sm font-medium">Status</label>
-                                <select
-                                    name="status"
-                                    value={tripData.status}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 px-3 py-2 rounded-md"
-                                >
-                                    <option value="Pending">Pending</option>
-                                    <option value="Accepted">Accepted</option>
-                                    <option value="Processing">Processing</option>
-                                    <option value="Completed">Completed</option>
-                                </select>
-                            </div>
-                        )}
-
-                        <div ref={formRef} className="col-span-full">
-                            <button
-                                type="submit"
-                                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-                            >
-                                {isUpdating ? "Update Trip" : "Add Trip"}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {((user?.role?.toLowerCase() || role?.toLowerCase()) === "admin") && (
-                <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-4">Trips Management</h2>
-
-                    {/* Filters Control Bar */}
-                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
-
-                        {/* Tabs */}
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setActiveTab('All')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                All Trips
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Instant')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Quick Rides
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Scheduled')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Scheduled Rides
-                            </button>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
-                            >
-                                <option value="All">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Accepted">Accepted - Driver Assigned</option>
-                                <option value="Processing">Processing - In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
+                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                            isProcessing ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                isAccepted ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                    'bg-gray-50 text-gray-400 border border-gray-100'
+                            }`}>
+                            {trip.status}
                         </div>
                     </div>
 
-                    <p className="text-sm text-gray-500 mb-2">Showing {filteredTrips.length} results</p>
+                    <div className="space-y-6">
+                        <div className="relative pl-6 border-l-2 border-dashed border-gray-100 space-y-8">
+                            <div className="absolute top-0 -left-[5px] w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                            <div className="absolute bottom-0 -left-[5px] w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
 
-                    <table className="w-full border-collapse bg-white shadow rounded">
-                        <thead>
-                            <tr className="bg-blue-600 text-white">
-                                <th className="p-3 text-left">Customer</th>
-                                <th className="p-3 text-left">Driver</th>
-                                <th className="p-3 text-left">Vehicle</th>
-                                <th className="p-3 text-left">Route</th>
-                                <th className="p-3 text-left">Trip Date</th>
-                                <th className="p-3 text-left">Booking Date</th>
-                                <th className="p-3 text-left">Status</th>
-                                <th className="p-3 text-left">Type</th>
-                                <th className="p-3 text-left">Discount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tripState.loading || tripState.error ? (
-                                <tr>
-                                    <td colSpan={9}>
-                                        {tripState.loading ? (
-                                            <p className="p-4 text-center">Loading trips...</p>
-                                        ) : (
-                                            <p className="p-4 text-center text-red-500">{tripState.error}</p>
-                                        )}
-                                    </td>
-                                </tr>
-                            ) : filteredTrips.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="p-8 text-center text-gray-500 italic">
-                                        No trips found matching the selected filters.
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredTrips.map(trip => (
-                                    <tr key={trip._id} className="border-b hover:bg-gray-50">
-                                        <td className="p-3">{trip.customerId?.name || "N/A"}</td>
-                                        <td className="p-3">{trip.driverId?.name || "N/A"}</td>
-                                        <td className="p-3">{trip.vehicleId?.brand} {trip.vehicleId?.model || "N/A"}</td>
-                                        <td className="p-3">
-                                            <div className="flex flex-col text-sm max-w-[200px]">
-                                                <span className="truncate" title={trip.startLocation}>{trip.startLocation}</span>
-                                                <span className="text-xs text-gray-400">↓</span>
-                                                <span className="truncate" title={trip.endLocation}>{trip.endLocation}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-3 text-sm">
-                                            {trip.date ? (
-                                                trip.endDate && new Date(trip.date).toDateString() !== new Date(trip.endDate).toDateString()
-                                                    ? `${new Date(trip.date).toLocaleString()} - ${new Date(trip.endDate).toLocaleString()}`
-                                                    : new Date(trip.date).toLocaleString()
-                                            ) : "N/A"}
-                                        </td>
-                                        <td className="p-3 text-sm">{trip.createdAt ? new Date(trip.createdAt).toLocaleDateString() : "-"}</td>
-                                        <td className="p-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${trip.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                                                trip.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                                                    trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                        trip.status === 'Accepted' ? 'bg-blue-100 text-blue-800' :
-                                                            trip.status === 'cancelled' || trip.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
-                                                                trip.status === 'Rejected' ? 'bg-red-50 text-red-600' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {trip.status || "N/A"}
-                                            </span>
-                                        </td>
-                                        <td className="p-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${trip.tripType === 'Instant' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
-                                                trip.tripType === 'Scheduled' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                                    'bg-gray-50 text-gray-600'
-                                                }`}>
-                                                {trip.tripType === 'Instant' ? 'Quick' : trip.tripType || 'Other'}
-                                            </span>
-                                        </td>
-                                        <td className="p-3">
-                                            {trip.promoCode ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs bg-green-100 text-green-700 px-1 py-0.5 rounded w-fit mb-1">{trip.promoCode}</span>
-                                                    <span className="text-sm font-bold text-red-600">- Rs. {trip.discountAmount}</span>
-                                                </div>
-                                            ) : "-"}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                            <div>
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Initiation</p>
+                                <p className="text-sm font-bold text-gray-900 line-clamp-1 leading-tight">{trip.startLocation}</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Destination</p>
+                                <p className="text-sm font-bold text-gray-900 line-clamp-1 leading-tight">{trip.endLocation}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-gray-50/50">
+                            <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 transition-colors group-hover:bg-white group-hover:border-gray-100">
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Fiscal Yield</p>
+                                <p className="text-sm font-black text-blue-600">Rs. {trip.price?.toLocaleString()}</p>
+                            </div>
+                            <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 transition-colors group-hover:bg-white group-hover:border-gray-100">
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Telemetry</p>
+                                <p className="text-sm font-black text-gray-900">{trip.distance} <span className="text-[10px] text-gray-400">KM</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 flex items-center justify-between">
+                        <div className="flex -space-x-3">
+                            <div className="w-10 h-10 rounded-2xl bg-gray-100 border-4 border-white flex items-center justify-center text-gray-400 text-sm shadow-sm">
+                                <FaUser />
+                            </div>
+                            <div className="w-10 h-10 rounded-2xl bg-blue-50 border-4 border-white flex items-center justify-center text-blue-600 text-sm shadow-sm">
+                                <FaCar />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 group/btn">
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Mission Intel</span>
+                            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 transition-all group-hover:bg-blue-600 group-hover:text-white group-hover/btn:translate-x-1 shadow-sm">
+                                <HiArrowRight />
+                            </div>
+                        </div>
+                    </div>
+
+                    {((isMarketplace && isPending) || (!isMarketplace && isPending && user?.role?.toLowerCase() === 'driver')) && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleStatusUpdateUI(trip._id!, 'Accepted'); }}
+                            className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <FaCheckCircle className="text-sm" /> {isMarketplace ? 'Claim Operational Vector' : 'Accept Trip Request'}
+                        </button>
+                    )}
+
+                    {!isMarketplace && isAccepted && user?.role?.toLowerCase() === 'driver' && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleStatusUpdateUI(trip._id!, 'Processing'); }}
+                            className="mt-8 w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <FaClock className="text-sm" /> Initiate Mission Process
+                        </button>
+                    )}
+
+                    {!isMarketplace && isProcessing && user?.role?.toLowerCase() === 'driver' && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleStatusUpdateUI(trip._id!, 'Completed'); }}
+                            className="mt-8 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <FaCheckCircle className="text-sm" /> Terminate Mission (Complete)
+                        </button>
+                    )}
                 </div>
-            )}
+            </div>
+        );
+    };
 
-            {((user?.role?.toLowerCase() || role?.toLowerCase()) === "driver") && (
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-center flex-1">Your Trips</h2>
-                        <div className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-md border">
-                            <span className={`font-medium ${user?.isAvailable !== false ? 'text-green-600' : 'text-gray-500'}`}>
-                                {user?.isAvailable !== false ? '🟢 Available' : '🔴 Not Available'}
-                            </span>
+
+    return (
+        <div className="min-h-screen bg-[#F8FAFC] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] p-4 lg:p-10 font-sans">
+
+            <div className="max-w-7xl mx-auto space-y-12">
+                {/* 1. MISSION DISPATCH CONSOLE (Customer & Admin) */}
+                {(user?.role?.toLowerCase() !== "driver") && (
+                    <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-1 shadow-[0_40px_90px_rgba(0,0,0,0.06)] border border-white/20 relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        {/* Internal Ambient Glow */}
+                        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3"></div>
+
+                        <div className="p-8 lg:p-14 relative z-10">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12">
+                                <div>
+                                    <div className="flex items-center gap-4 mb-3">
+                                        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg">
+                                            <HiTruck className="text-white text-2xl" />
+                                        </div>
+                                        <h1 className="text-4xl font-bold text-gray-900">
+                                            {isUpdating ? "Update Booking" : "Book Your Ride"}
+                                        </h1>
+                                    </div>
+                                    <p className="text-gray-500 font-medium text-sm ml-1">Fast, reliable, and comfortable transportation</p>
+                                </div>
+                                <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-sm">
+                                    {(['Quick Ride', 'Extended Trip'] as const).map((mode) => (
+                                        <button
+                                            key={mode}
+                                            type="button"
+                                            onClick={() => handleTripModeChange(mode)}
+                                            className={`px-8 py-3 rounded-xl text-sm font-semibold transition-all ${tripMode === mode
+                                                ? "bg-white text-blue-600 shadow-md"
+                                                : "text-gray-600 hover:text-gray-900"
+                                                }`}
+                                        >
+                                            {mode === 'Quick Ride' ? 'Quick Ride' : 'Schedule Trip'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-10">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                    {/* Left Column: Trip Details */}
+                                    <div className="space-y-8">
+                                        {/* 1. Pickup & Drop-off Locations */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold shadow-md">
+                                                        1
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-gray-700">Pickup Location</span>
+                                                </div>
+                                                <LocationPicker
+                                                    onLocationSelect={(lat, lng, address) => {
+                                                        setStartCoords({ lat, lng });
+                                                        setStartAddress(address);
+                                                        setTripData(prev => ({ ...prev, startLocation: address, startLat: lat, startLng: lng }));
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-md">
+                                                        2
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-gray-700">Drop-off Location</span>
+                                                </div>
+                                                <LocationPicker
+                                                    onLocationSelect={(lat, lng, address) => {
+                                                        setEndCoords({ lat, lng });
+                                                        setEndAddress(address);
+                                                        setTripData(prev => ({ ...prev, endLocation: address, endLat: lat, endLng: lng }));
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* 2. Driver Selection */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between px-2">
+                                                <label className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                                    Select Driver
+                                                </label>
+                                                {!startCoords && (
+                                                    <span className="text-xs font-medium text-amber-600 animate-pulse">
+                                                        Select pickup to view drivers
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-none snap-x">
+                                                {drivers.length === 0 ? (
+                                                    <div className="w-full py-16 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                                        <p className="text-sm font-medium text-gray-400">No drivers available in this area</p>
+                                                    </div>
+                                                ) : (
+                                                    drivers.map(d => (
+                                                        <div
+                                                            key={d._id}
+                                                            onClick={() => setTripData(prev => ({ ...prev, driverId: d._id! }))}
+                                                            className={`min-w-[260px] snap-start bg-white rounded-2xl p-5 border-2 transition-all cursor-pointer ${tripData.driverId === d._id
+                                                                ? 'border-blue-600 shadow-lg ring-2 ring-blue-100'
+                                                                : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-center gap-3 mb-4">
+                                                                {d.profileImage ? (
+                                                                    <div className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${tripData.driverId === d._id
+                                                                        ? 'border-blue-600 ring-2 ring-blue-100'
+                                                                        : 'border-gray-200'
+                                                                        }`}>
+                                                                        <img
+                                                                            src={d.profileImage}
+                                                                            alt={d.name}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl transition-colors ${tripData.driverId === d._id
+                                                                        ? 'bg-blue-600 text-white'
+                                                                        : 'bg-gray-100 text-gray-400'
+                                                                        }`}>
+                                                                        <FaUser />
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1">
+                                                                    <p className="text-base font-bold text-gray-900">{d.name}</p>
+                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                        <span className="text-sm font-semibold text-amber-500">
+                                                                            ⭐ {d.averageRating?.toFixed(1) || "5.0"}
+                                                                        </span>
+                                                                        <span className="text-xs font-medium text-gray-500">
+                                                                            {(() => {
+                                                                                // Calculate route-specific trip count
+                                                                                if (startProvince && endProvince && d.provincesVisited) {
+                                                                                    const startCount = d.provincesVisited.find(p => p.province === startProvince)?.count || 0;
+                                                                                    const endCount = d.provincesVisited.find(p => p.province === endProvince)?.count || 0;
+
+                                                                                    // If same province, show that count
+                                                                                    if (startProvince === endProvince) {
+                                                                                        return `${startCount} trips in ${startProvince}`;
+                                                                                    }
+
+                                                                                    // Show combined for route
+                                                                                    return `${startCount + endCount} route trips`;
+                                                                                } else if (startProvince && d.provincesVisited) {
+                                                                                    const count = d.provincesVisited.find(p => p.province === startProvince)?.count || 0;
+                                                                                    return `${count} trips in ${startProvince}`;
+                                                                                }
+
+                                                                                // Fallback to total
+                                                                                return `${d.experience || 0} total trips`;
+                                                                            })()}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                                                                <span className="text-xs font-medium text-gray-500">Verified Driver</span>
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Vehicle Selection */}
+                                        <div className="space-y-4">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+                                                <label className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                                                    Choose Vehicle
+                                                </label>
+                                                <div className="flex gap-2 bg-gray-100 p-1.5 rounded-2xl">
+                                                    {availableCategories.map(cat => (
+                                                        <button
+                                                            key={cat}
+                                                            type="button"
+                                                            onClick={() => setSelectedCategory(cat)}
+                                                            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${selectedCategory === cat
+                                                                ? 'bg-white text-purple-600 shadow-sm'
+                                                                : 'text-gray-600 hover:text-gray-900'
+                                                                }`}
+                                                        >
+                                                            {cat}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                                {filteredVehicles.length === 0 ? (
+                                                    <div className="col-span-full py-16 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                                        <p className="text-sm font-medium text-gray-400">
+                                                            No vehicles available in {selectedCategory} category
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    filteredVehicles.map(v => (
+                                                        <div
+                                                            key={v._id}
+                                                            onClick={() => setTripData(prev => ({ ...prev, vehicleId: v._id! }))}
+                                                            className={`bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${tripData.vehicleId === v._id
+                                                                ? 'border-purple-600 shadow-xl ring-2 ring-purple-100'
+                                                                : 'border-gray-200 hover:border-purple-300 hover:shadow-lg'
+                                                                }`}
+                                                        >
+                                                            {/* Vehicle Image */}
+                                                            <div className="relative h-36 overflow-hidden bg-gray-100">
+                                                                {v.image ? (
+                                                                    <img
+                                                                        src={v.image}
+                                                                        alt={`${v.brand} ${v.model}`}
+                                                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                                                        <FaCar className="text-5xl text-gray-300" />
+                                                                    </div>
+                                                                )}
+                                                                {/* Category Badge */}
+                                                                <div className="absolute top-3 right-3">
+                                                                    <span className={`px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border ${v.category === 'Luxury' ? 'bg-amber-500/90 text-white border-amber-400' :
+                                                                        v.category === 'Premium' ? 'bg-purple-500/90 text-white border-purple-400' :
+                                                                            v.category === 'Economy' ? 'bg-green-500/90 text-white border-green-400' :
+                                                                                'bg-blue-500/90 text-white border-blue-400'
+                                                                        }`}>
+                                                                        {v.category}
+                                                                    </span>
+                                                                </div>
+                                                                {/* Selected Indicator */}
+                                                                {tripData.vehicleId === v._id && (
+                                                                    <div className="absolute top-3 left-3 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-lg">
+                                                                        <span className="text-white font-bold">✓</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Vehicle Details */}
+                                                            <div className="p-4 space-y-3">
+                                                                {/* Title & Name */}
+                                                                <div>
+                                                                    <p className="text-base font-bold text-gray-900">
+                                                                        {v.brand} {v.model}
+                                                                    </p>
+                                                                    <p className="text-xs font-medium text-gray-500 mt-0.5">{v.name}</p>
+                                                                </div>
+
+                                                                {/* Price */}
+                                                                <div className={`rounded-xl p-3 border transition-all ${tripData.vehicleId === v._id
+                                                                    ? 'bg-purple-50 border-purple-200'
+                                                                    : 'bg-gray-50 border-gray-200'
+                                                                    }`}>
+                                                                    <p className="text-xs font-medium text-gray-500 mb-1">Rate</p>
+                                                                    <p className="text-2xl font-bold text-purple-600">
+                                                                        Rs. {v.pricePerKm || 100}
+                                                                        <span className="text-sm text-gray-500 font-semibold ml-1">/km</span>
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Specifications Grid */}
+                                                                <div className="grid grid-cols-3 gap-2">
+                                                                    <div className="text-center bg-gray-50 rounded-xl p-2 border border-gray-200">
+                                                                        <p className="text-xs font-medium text-gray-500 mb-1">Seats</p>
+                                                                        <p className="text-sm font-bold text-gray-900">{v.seats || 4}</p>
+                                                                    </div>
+                                                                    <div className="text-center bg-gray-50 rounded-xl p-2 border border-gray-200">
+                                                                        <p className="text-xs font-medium text-gray-500 mb-1">Year</p>
+                                                                        <p className="text-sm font-bold text-gray-900">{v.year || 'N/A'}</p>
+                                                                    </div>
+                                                                    <div className="text-center bg-gray-50 rounded-xl p-2 border border-gray-200">
+                                                                        <p className="text-xs font-medium text-gray-500 mb-1">Color</p>
+                                                                        <div className="flex items-center justify-center">
+                                                                            <div
+                                                                                className="w-4 h-4 rounded-full border-2 border-gray-300 shadow-sm"
+                                                                                style={{ backgroundColor: v.color || '#666' }}
+                                                                                title={v.color}
+                                                                            ></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Description */}
+                                                                {v.description && (
+                                                                    <div className="pt-2 border-t border-gray-100">
+                                                                        <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                                                            {v.description}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Selection Indicator */}
+                                                                {tripData.vehicleId === v._id && (
+                                                                    <div className="flex items-center justify-center gap-2 pt-1">
+                                                                        <div className="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></div>
+                                                                        <p className="text-xs font-semibold text-purple-600">Selected</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Trip Summary & Options */}
+                                    <div className="space-y-8">
+                                        {/* Date Selection for Extended Trips */}
+                                        {tripMode === 'Extended Trip' && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-semibold text-gray-700 ml-1">Start Date & Time</label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={tripData.date ? toLocalDateTimeString(tripData.date) : ""}
+                                                        onChange={(e) => setTripData(prev => ({ ...prev, date: fromLocalDateTimeString(e.target.value) }))}
+                                                        className="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-sm font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-semibold text-gray-700 ml-1">End Date & Time</label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={tripData.endDate ? toLocalDateTimeString(tripData.endDate) : ""}
+                                                        onChange={(e) => setTripData(prev => ({ ...prev, endDate: fromLocalDateTimeString(e.target.value) }))}
+                                                        className="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-sm font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Trip Summary Card */}
+                                        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+                                            <div className="relative z-10 space-y-6">
+                                                <h3 className="text-lg font-bold mb-6">Trip Summary</h3>
+
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div>
+                                                        <p className="text-xs font-medium text-blue-200 mb-2">Total Distance</p>
+                                                        <p className="text-4xl font-bold">
+                                                            {isCalculatingDistance ? "..." : (tripData.distance || "0")}
+                                                            <span className="text-lg ml-1 opacity-70">km</span>
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-medium text-blue-200 mb-2">Total Fare</p>
+                                                        <p className="text-4xl font-bold">
+                                                            Rs. {tripData.price?.toLocaleString() || "0"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Promo Code Section */}
+                                                <div className="pt-4 space-y-3">
+                                                    <p className="text-sm font-semibold">Have a promo code?</p>
+                                                    <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-1.5 border border-white/20 flex">
+                                                        <input
+                                                            placeholder="Enter promo code"
+                                                            className="bg-transparent border-none focus:ring-0 text-white placeholder:text-white/50 font-medium px-4 py-2.5 w-full text-sm focus:outline-none"
+                                                            value={promoCodeInput}
+                                                            onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                                                            disabled={!!appliedPromo}
+                                                        />
+                                                        {appliedPromo ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleRemovePromo}
+                                                                className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleApplyPromo}
+                                                                className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
+                                                            >
+                                                                Apply
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {promoError && (
+                                                        <p className="text-xs text-red-200 font-medium ml-1">⚠️ {promoError}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Additional Notes */}
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-700 ml-1">Additional Notes (Optional)</label>
+                                            <textarea
+                                                name="notes"
+                                                value={tripData.notes || ""}
+                                                onChange={handleChange}
+                                                rows={4}
+                                                placeholder="Add any special requests or instructions for the driver..."
+                                                className="w-full bg-white border-2 border-gray-200 rounded-2xl py-4 px-5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all resize-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer Section */}
+                                <div className="pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="flex flex-wrap justify-center gap-6">
+                                        <div className="flex items-center gap-2 text-gray-600 font-medium text-sm">
+                                            <FaCheckCircle className="text-emerald-500 text-lg" /> Safe & Secure
+                                        </div>
+                                        <div className="flex items-center gap-2 text-gray-600 font-medium text-sm">
+                                            <FaClock className="text-blue-500 text-lg" /> Quick Booking
+                                        </div>
+                                        <div className="flex items-center gap-2 text-gray-600 font-medium text-sm">
+                                            <FaUser className="text-purple-500 text-lg" /> Verified Drivers
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 w-full sm:w-auto">
+                                        {isUpdating && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsUpdating(false);
+                                                    setSelectedTripId(null);
+                                                    window.location.reload();
+                                                }}
+                                                className="flex-1 sm:flex-none px-8 py-4 rounded-2xl font-semibold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                        <button
+                                            type="submit"
+                                            className="flex-1 sm:min-w-[240px] bg-gray-900 hover:bg-black text-white py-4 px-8 rounded-2xl font-bold text-sm transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3 active:scale-[0.98]"
+                                        >
+                                            {isUpdating ? "Update Booking" : "Book Now"}
+                                            <HiArrowRight className="text-xl" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* 2. ADMIN OPERATIONAL OVERSIGHT */}
+                {((user?.role?.toLowerCase() || role?.toLowerCase()) === "admin") && (
+                    <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-1 shadow-[0_40px_90px_rgba(0,0,0,0.04)] border border-white/20 relative overflow-hidden">
+                        <div className="p-8 lg:p-14">
+                            <div className="flex flex-col lg:flex-row justify-between items-end gap-10 mb-16">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-1.5 h-8 bg-blue-600 rounded-full"></div>
+                                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Operational Ledger</h2>
+                                    </div>
+                                    <p className="text-gray-400 font-bold uppercase tracking-[0.15em] text-[10px] ml-1">Observing {filteredTrips.length} global logistics vectors</p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-4 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                                    {['All', 'Instant', 'Scheduled'].map((tab) => (
+                                        <button
+                                            key={tab}
+                                            type="button"
+                                            onClick={() => setActiveTab(tab as any)}
+                                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-lg shadow-blue-500/5' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            {tab} Units
+                                        </button>
+                                    ))}
+                                    <div className="w-px h-6 bg-gray-200 mx-2"></div>
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value)}
+                                        className="bg-transparent text-[10px] font-black uppercase tracking-widest text-gray-500 focus:outline-none cursor-pointer pr-4"
+                                    >
+                                        <option value="All">All Logistics</option>
+                                        {['Pending', 'Accepted', 'Processing', 'Completed', 'Paid', 'Cancelled', 'Rejected'].map(s => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto -mx-8 lg:-mx-14 px-8 lg:px-14">
+                                <table className="w-full border-separate border-spacing-y-4">
+                                    <thead>
+                                        <tr className="text-left text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                            <th className="px-8 pb-4">Logistics Nodes</th>
+                                            <th className="px-8 pb-4">Geometry Matrix</th>
+                                            <th className="px-8 pb-4">Status & Telemetry</th>
+                                            <th className="px-8 pb-4 text-right">Fiscal Yield</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredTrips.map(trip => (
+                                            <tr key={trip._id} className="group bg-white hover:bg-blue-50/20 transition-all rounded-3xl cursor-pointer" onClick={() => { setSelectedTripDetails(trip); setShowDetailsModal(true); }}>
+                                                <td className="px-8 py-6 rounded-l-[1.8rem] border-y border-l border-gray-50">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center font-black group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                                                            {trip.customerId?.name?.charAt(0).toUpperCase() || "?"}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{trip.customerId?.name || "Unverified Client"}</p>
+                                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ref: #{trip._id?.slice(-8).toUpperCase()}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6 border-y border-gray-50">
+                                                    <div className="flex flex-col gap-2">
+                                                        <p className="text-xs font-bold text-gray-700 truncate max-w-[200px] flex items-center gap-2">
+                                                            <span className="w-1 h-1 rounded-full bg-emerald-500"></span> {trip.startLocation}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-gray-700 truncate max-w-[200px] flex items-center gap-2">
+                                                            <span className="w-1 h-1 rounded-full bg-red-500"></span> {trip.endLocation}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6 border-y border-gray-50">
+                                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${trip.status === 'Completed' || trip.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
+                                                        trip.status === 'Accepted' ? 'bg-blue-50 text-blue-600' :
+                                                            trip.status === 'Processing' ? 'bg-amber-50 text-amber-600' :
+                                                                'bg-gray-50 text-gray-400'}`}>
+                                                        {trip.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-8 py-6 rounded-r-[1.8rem] border-y border-r border-gray-50 text-right">
+                                                    <p className="text-lg font-black text-gray-900 leading-none">Rs. {trip.price?.toLocaleString()}</p>
+                                                    <p className="text-[9px] font-bold text-gray-300 uppercase mt-1 tracking-widest">{trip.distance} KM Radius</p>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {filteredTrips.length === 0 && (
+                                    <div className="py-24 text-center">
+                                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
+                                            <FaRoute size={32} />
+                                        </div>
+                                        <p className="text-xl font-black text-gray-900 tracking-tight">Zero Logistics Nodes</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">No missions detected within current tactical parameters</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* 3. DRIVER MISSION PULSE */}
+                {((user?.role?.toLowerCase() || role?.toLowerCase()) === "driver") && (
+                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                        {/* Availablity Control */}
+                        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_40px_90px_rgba(0,0,0,0.04)] border border-white/20 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
+
+                            <div className="flex items-center gap-6 relative z-10">
+                                <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-2xl transition-all duration-700 ${user?.isAvailable !== false ? 'bg-emerald-500 shadow-emerald-500/30 ring-4 ring-emerald-50' : 'bg-gray-200 shadow-gray-200/30'}`}>
+                                    <FaUser className="text-white text-2xl" />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Driver Control Module</h2>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <div className={`w-2 h-2 rounded-full ${user?.isAvailable !== false ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                                        <span className={`font-black uppercase tracking-[0.2em] text-[10px] ${user?.isAvailable !== false ? 'text-emerald-500' : 'text-gray-400'}`}>
+                                            {user?.isAvailable !== false ? 'Operational Vector Active' : 'Standby Protocol Engaged'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button
+                                type="button"
                                 onClick={async () => {
                                     if (user?._id) {
                                         try {
                                             const response = await backendApi.patch(`/api/v1/users/toggle-availability/${user._id}`);
                                             setUser(response.data);
-                                            alert(user?.isAvailable !== false
-                                                ? "You are now unavailable for new trips"
-                                                : "You are now available for new trips");
-                                        } catch (error) {
-                                            console.error("Error toggling availability:", error);
-                                            alert("Failed to update availability");
-                                        }
+                                        } catch (error) { console.error(error); }
                                     }
                                 }}
-                                className={`px-4 py-2 rounded-md font-medium transition-colors ${user?.isAvailable !== false
-                                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                                    : 'bg-green-500 hover:bg-green-600 text-white'
+                                className={`relative z-10 px-12 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.25em] transition-all shadow-2xl active:scale-95 ${user?.isAvailable !== false
+                                    ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 shadow-amber-200/20'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/30'
                                     }`}
                             >
-                                {user?.isAvailable !== false ? 'Set Unavailable' : 'Set Available'}
+                                {user?.isAvailable !== false ? 'ENGAGE STANDBY' : 'INITIATE ACTIVE DUTY'}
                             </button>
                         </div>
+
+                        {/* Marketplace Broadcasting Section */}
+                        {(() => {
+                            const marketplaceTrips = driverTrips.filter(t => t.isBroadcast && t.status === "Pending");
+                            if (marketplaceTrips.length === 0) return null;
+                            return (
+                                <section className="space-y-8">
+                                    <div className="flex items-center justify-between px-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="px-3 py-1 bg-purple-100 text-purple-600 rounded-lg text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-ping"></div> Live Broadcast
+                                            </div>
+                                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Marketplace Opportunities</h3>
+                                        </div>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{marketplaceTrips.length} Operational Nodes</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {marketplaceTrips.map(trip => renderTripCard(trip, true))}
+                                    </div>
+                                </section>
+                            );
+                        })()}
+
+                        {/* Personal Mission Ledger */}
+                        <section className="space-y-10">
+                            <div className="flex flex-col md:flex-row justify-between items-end gap-10 px-6">
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">Personal Operational Ledger</h3>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Historical & active logistics tracking</p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                                    {(['All', 'Pending', 'Accepted', 'Processing', 'Completed'] as const).map(s => (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            onClick={() => setFilterStatus(s)}
+                                            className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'bg-white text-blue-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {(() => {
+                                const myTrips = driverTrips.filter(t => !(t.isBroadcast && t.status === "Pending"));
+                                const filteredMyTrips = myTrips.filter(trip => {
+                                    if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
+                                    if (activeTab !== 'All' && trip.tripType !== activeTab) return false;
+                                    return true;
+                                }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+                                if (filteredMyTrips.length === 0) {
+                                    return (
+                                        <div className="bg-white/50 backdrop-blur-xl rounded-[3rem] p-24 text-center border-2 border-dashed border-gray-100">
+                                            <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-8 text-gray-100">
+                                                <HiTruck size={40} />
+                                            </div>
+                                            <p className="text-xl font-black text-gray-900 tracking-tight lowercase first-letter:uppercase italic font-serif">No missions inscribed in ledger</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">Awaiting operational requisition...</p>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {filteredMyTrips.map(trip => renderTripCard(trip, false))}
+                                    </div>
+                                );
+                            })()}
+                        </section>
                     </div>
+                )}
 
-                    {/* Filters Control Bar */}
-                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
-                        {/* Tabs */}
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setActiveTab('All')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                All Trips
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Instant')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Quick Rides
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Scheduled')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Scheduled Rides
-                            </button>
+
+
+                {/* 4. CUSTOMER MISSION ARCHIVE */}
+                {((user?.role?.toLowerCase() || role?.toLowerCase()) === "customer") && (
+                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                        <div className="flex flex-col md:flex-row justify-between items-end gap-10 px-8">
+                            <div>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Mission History</h2>
+                                </div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Comprehensive archive of your transit logistics</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 backdrop-blur-xl">
+                                {(['All', 'Instant', 'Scheduled'] as const).map(tab => (
+                                    <button
+                                        key={tab}
+                                        type="button"
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-xl' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
+                                        {tab} History
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Status Filter */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
-                            >
-                                <option value="All">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Accepted">Accepted - Future</option>
-                                <option value="Processing">Processing - Active</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {(() => {
-                        // 1. Separate Trips
-                        const marketplaceTrips = driverTrips.filter(t => t.isBroadcast && t.status === "Pending");
-                        const myTrips = driverTrips.filter(t => !(t.isBroadcast && t.status === "Pending"));
-
-                        // 2. Filter & Sort Logic (Reusable)
-                        const filterAndSort = (list: typeof driverTrips) => {
-                            return list.filter(trip => {
-                                if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
-                                if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
+                        {(() => {
+                            const filteredCustomerTrips = customerTrips.filter(trip => {
+                                if (activeTab !== 'All' && trip.tripType !== activeTab) return false;
                                 if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
                                 return true;
                             }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-                        };
 
-                        const filteredMarketplace = filterAndSort(marketplaceTrips);
-                        const filteredMyTrips = filterAndSort(myTrips);
+                            const indexOfLastItem = currentPage * itemsPerPage;
+                            const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                            const currentTrips = filteredCustomerTrips.slice(indexOfFirstItem, indexOfLastItem);
 
-                        // Render Card (Reusable)
-                        const renderTripCard = (trip: typeof driverTrips[0], isMarketplace: boolean) => (
-                            <div key={trip._id} className={`shadow-lg rounded-xl overflow-hidden border flex flex-col h-full hover:shadow-xl transition-shadow duration-300 ${isMarketplace ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-100'}`}>
-                                {/* Header: Route & Status */}
-                                <div className={`p-5 border-b ${isMarketplace ? 'border-purple-100 bg-purple-100/50' : 'border-gray-100 bg-gray-50/50'}`}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="space-y-3 w-full">
-                                            <div className="flex items-start gap-3">
-                                                <div className="flex flex-col items-center gap-1 mt-1">
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div>
-                                                    <div className="w-0.5 h-8 bg-gray-200 border-l border-dashed border-gray-300"></div>
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div>
-                                                </div>
-                                                <div className="flex-1 space-y-2">
-                                                    <div>
-                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Pick Up</p>
-                                                        <p className="text-sm font-semibold text-gray-800 leading-tight">{trip.startLocation}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Drop Off</p>
-                                                        <p className="text-sm font-semibold text-gray-800 leading-tight">{trip.endLocation}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            if (currentTrips.length === 0) {
+                                return (
+                                    <div className="bg-white/50 backdrop-blur-xl rounded-[3rem] p-32 text-center border border-gray-100 border-dashed">
+                                        <div className="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mx-auto mb-10 text-gray-100">
+                                            <FaCar size={40} />
                                         </div>
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Archive Empty</h3>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">No tactical mission data found for selected filters</p>
                                     </div>
+                                );
+                            }
 
-                                    <div className="flex items-center justify-between mt-2">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${trip.tripType === 'Instant' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                                            {trip.tripType === 'Instant' ? '⚡ Quick' : '📅 Scheduled'}
-                                        </span>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${trip.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                            trip.status === 'Processing' ? 'bg-yellow-100 text-yellow-700' :
-                                                trip.status === 'Accepted' ? 'bg-blue-100 text-blue-700' :
-                                                    trip.status === 'Pending' ? 'bg-orange-100 text-orange-700' :
-                                                        'bg-gray-100 text-gray-600'
-                                            }`}>
-                                            {trip.status}
-                                        </span>
+                            return (
+                                <div className="space-y-12">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {currentTrips.map(trip => renderTripCard(trip, false))}
                                     </div>
-
-                                    {/* Broadcast / Marketplace Badge */}
-                                    {isMarketplace && (
-                                        <div className="mt-2 text-center">
-                                            <span className="inline-block px-3 py-1 bg-purple-600 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-sm animate-pulse">
-                                                🔥 Market Place - First to Accept Wins!
-                                            </span>
-                                        </div>
-                                    )}
+                                    <Pagination totalItems={filteredCustomerTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} />
                                 </div>
-
-                                {/* Body: Details */}
-                                <div className="p-5 space-y-4 flex-grow">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/50 p-3 rounded-lg border border-gray-100">
-                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Customer</p>
-                                            <p className="font-semibold text-gray-800 truncate" title={trip.customerId?.name}>{trip.customerId?.name || "N/A"}</p>
-                                        </div>
-                                        <div className="bg-white/50 p-3 rounded-lg border border-gray-100">
-                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Vehicle</p>
-                                            <p className="font-semibold text-gray-800 truncate">{trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-between items-center bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                                        <div>
-                                            <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-0.5">Distance</p>
-                                            <p className="font-bold text-gray-700">{trip.distance ? parseFloat(trip.distance).toFixed(1) : "0"} km</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-0.5">Earnings</p>
-                                            <p className="font-bold text-green-600 text-lg">Rs. {trip.price ? trip.price.toFixed(0) : "0"}</p>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Schedule</p>
-                                        <p className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                                            <span>📅</span>
-                                            {trip.date ? new Date(trip.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : "N/A"}
-                                        </p>
-                                    </div>
-
-                                    {trip.notes && (
-                                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                                            <p className="text-xs text-yellow-600 font-bold uppercase tracking-wider mb-1">Note</p>
-                                            <p className="text-sm text-gray-700 italic">"{trip.notes}"</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Footer: Actions */}
-                                <div className="p-5 pt-0 mt-auto">
-                                    {trip.status === 'Pending' && (
-                                        <div className="flex gap-3">
-                                            <button
-                                                onClick={() => handleStatusUpdateUI(trip._id!, "Accepted")}
-                                                className={`flex-1 text-white py-3 rounded-lg font-bold text-sm shadow-lg transition-all active:scale-95 ${isMarketplace ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
-                                            >
-                                                {isMarketplace ? "Claim Trip" : "Accept"}
-                                            </button>
-                                            {!isMarketplace && (
-                                                <button
-                                                    onClick={() => handleRejectTrip(trip._id!)}
-                                                    className="flex-1 bg-white text-red-500 border border-red-100 py-3 rounded-lg hover:bg-red-50 font-bold text-sm transition-all"
-                                                >
-                                                    Decline
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {trip.status === 'Accepted' && (
-                                        <div className="space-y-2">
-                                            <button
-                                                onClick={() => handleStatusUpdateUI(trip._id!, "Processing")}
-                                                className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white py-3 rounded-lg hover:from-yellow-500 hover:to-amber-600 font-bold text-sm shadow-lg shadow-yellow-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                            >
-                                                <span>▶</span> Start Trip
-                                            </button>
-                                            <p className="text-[10px] text-center text-gray-400 font-medium">Click when you pick up the customer</p>
-                                        </div>
-                                    )}
-
-                                    {trip.status === 'Processing' && (
-                                        <button
-                                            onClick={() => handleStatusUpdateUI(trip._id!, "Completed")}
-                                            className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-sm shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                                        >
-                                            <span>🏁</span> Complete Trip
-                                        </button>
-                                    )}
-
-                                    {(trip.status === 'Completed' || trip.status === 'Paid') && (
-                                        <button
-                                            onClick={() => setInvoiceTripId(trip._id!)}
-                                            className="w-full border-2 border-dashed border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 py-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <span>📄</span> View Invoice
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        );
-
-                        return (
-                            <>
-                                {/* SECTION 1: MARKETPLACE */}
-                                {filteredMarketplace.length > 0 && (
-                                    <div className="mb-10 bg-purple-50 p-6 rounded-2xl border border-purple-100">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <span className="text-2xl">🔥</span>
-                                            <div>
-                                                <h3 className="text-xl font-bold text-purple-800">Marketplace Opportunities</h3>
-                                                <p className="text-sm text-purple-600">These trips are open to everyone. Claim them before someone else does!</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {filteredMarketplace.map(trip => renderTripCard(trip, true))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* SECTION 2: MY ASSIGNMENTS */}
-                                {filteredMyTrips.length > 0 ? (
-                                    <>
-                                        <h3 className="text-xl font-bold text-gray-800 mb-4 px-1">My Assignments / History</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {filteredMyTrips.map(trip => renderTripCard(trip, false))}
-                                        </div>
-                                        <Pagination totalItems={filteredMyTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} />
-                                    </>
-                                ) : (
-                                    <p className="text-center text-gray-600 p-8 bg-gray-50 rounded-lg">
-                                        No assigned trips found matching the selected filters.
-                                        {filteredMarketplace.length > 0 && " Check the Marketplace above!"}
-                                    </p>
-                                )}
-                            </>
-                        );
-                    })()}
-                </div>
-            )}
-
-            {((user?.role?.toLowerCase() || role?.toLowerCase()) === "customer") && (
-                <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-4 text-center">My Trips</h2>
-
-                    {/* Filters Control Bar */}
-                    <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6 border border-gray-100 gap-4">
-                        {/* Tabs */}
-                        <div className="flex bg-gray-100 p-1 rounded-lg">
-                            <button
-                                onClick={() => setActiveTab('All')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'All' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                All Trips
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Instant')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Instant' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Quick Rides
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('Scheduled')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'Scheduled' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'
-                                    }`}
-                            >
-                                Scheduled Rides
-                            </button>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-48"
-                            >
-                                <option value="All">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Accepted">Accepted - Driver Found</option>
-                                <option value="Processing">Processing - In Progress</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Cancelled">Cancelled</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
+                            );
+                        })()}
                     </div>
+                )}
+            </div>
 
-                    {(() => {
-                        // Apply filters to customerTrips
-                        const filteredCustomerTrips = customerTrips.filter(trip => {
-                            if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
-                            if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
-                            if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
-                            return true;
-                        }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-
-                        // Pagination Logic
-                        const indexOfLastItem = currentPage * itemsPerPage;
-                        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-                        const currentTrips = filteredCustomerTrips.slice(indexOfFirstItem, indexOfLastItem);
-
-                        return (
-                            <>
-                                <p className="text-sm text-gray-500 mb-4">
-                                    Showing {filteredCustomerTrips.length > 0 ? indexOfFirstItem + 1 : 0} - {Math.min(indexOfLastItem, filteredCustomerTrips.length)} of {filteredCustomerTrips.length} trips
-                                </p>
-
-                                {currentTrips.length === 0 ? (
-                                    <p className="text-center text-gray-600 p-8 bg-gray-50 rounded-lg">You don't have any trips matching the selected filters.</p>
-                                ) : (
-                                    <>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                            {currentTrips.map(trip => (
-                                                <div key={trip._id} className="bg-white shadow-md rounded-lg p-4 border border-gray-200 flex flex-col h-full">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h3 className="text-lg font-semibold">{trip.startLocation} → {trip.endLocation}</h3>
-                                                        <span className={`px-2 py-1 rounded text-xs ml-2 whitespace-nowrap ${trip.tripType === 'Instant' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                            }`}>
-                                                            {trip.tripType === 'Instant' ? 'Quick' : 'Scheduled'}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="flex-grow space-y-1 text-sm">
-                                                        <p><strong>Driver:</strong> {trip.driverId?.name || "N/A"}</p>
-                                                        <p><strong>Date:</strong> {formatTripDate(trip)}</p>
-                                                        <p><strong>Distance:</strong> {trip.distance || "N/A"} km</p>
-                                                        <p><strong>Price:</strong> Rs. {trip.price || "N/A"}</p>
-                                                        <p><strong>Vehicle:</strong> {trip.vehicleId?.brand} {trip.vehicleId?.model}</p>
-                                                        {trip.promoCode && (
-                                                            <div className="bg-green-50 p-1.5 rounded border border-green-200 mt-2">
-                                                                <span className="text-green-700 font-bold text-xs uppercase tracking-wider">Promo: {trip.promoCode}</span>
-                                                                <span className="block text-red-600 font-black text-lg">- Rs. {trip.discountAmount}</span>
-                                                            </div>
-                                                        )}
-                                                        {trip.notes && <p><strong>Notes:</strong> {trip.notes}</p>}
-                                                        <p className="mt-2"><strong>Status:</strong> <span className={`font-bold ${trip.status === 'Completed' || trip.status === 'Paid' ? 'text-green-600' :
-                                                            trip.status === 'Cancelled' ? 'text-red-600' :
-                                                                'text-blue-600'
-                                                            }`}>{trip.status}</span></p>
-                                                    </div>
-
-                                                    <div className="mt-4 pt-3 border-t">
-                                                        {/* Completed/Paid Actions */}
-                                                        {(trip.status === 'Completed') && (
-                                                            <button
-                                                                onClick={() => setInvoiceTripId(trip._id!)}
-                                                                className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm font-medium mb-2"
-                                                            >
-                                                                Pay Now
-                                                            </button>
-                                                        )}
-
-                                                        {(trip.status === 'Completed' || trip.status === 'Paid') && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => setInvoiceTripId(trip._id!)}
-                                                                    className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 text-sm font-semibold py-1.5 rounded transition mb-2"
-                                                                >
-                                                                    View Invoice / Receipt
-                                                                </button>
-
-                                                                {trip._id && trip.driverId?._id && !ratedTrips.has(trip._id) && (
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setRatingModal({
-                                                                                show: true,
-                                                                                tripId: trip._id!,
-                                                                                driverId: trip.driverId._id!,
-                                                                                driverName: trip.driverId.name || "Driver"
-                                                                            });
-                                                                        }}
-                                                                        className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-medium"
-                                                                    >
-                                                                        Rate Driver
-                                                                    </button>
-                                                                )}
-
-                                                                {trip._id && ratedTrips.has(trip._id) && (
-                                                                    <p className="text-center text-sm text-gray-500 italic">✓ You have rated this trip</p>
-                                                                )}
-                                                            </>
-                                                        )}
-
-                                                        {trip.status === 'Pending' && (
-                                                            <p className="text-xs text-center text-gray-500 italic mt-2">Waiting for driver approval</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <Pagination totalItems={filteredCustomerTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} />
-                                    </>
-                                )}
-                            </>
-                        );
-                    })()}
-                </div>
+            {/* MODAL LAYER ZONE */}
+            {ratingModal?.show && (
+                <RatingModal
+                    tripId={ratingModal.tripId}
+                    driverId={ratingModal.driverId}
+                    driverName={ratingModal.driverName}
+                    onClose={() => setRatingModal(null)}
+                    onRatingSubmitted={() => {
+                        checkRatedTrips();
+                        dispatch(getAllTrips());
+                    }}
+                />
             )}
 
-            {
-                ratingModal?.show && (
-                    <RatingModal
-                        tripId={ratingModal.tripId}
-                        driverId={ratingModal.driverId}
-                        driverName={ratingModal.driverName}
-                        onClose={() => setRatingModal(null)}
-                        onRatingSubmitted={() => {
-                            checkRatedTrips();
-                            dispatch(getAllTrips());
-                        }}
-                    />
-                )
-            }
+            {showDetailsModal && selectedTripDetails && (
+                <TripDetailsModal
+                    trip={selectedTripDetails}
+                    onClose={() => {
+                        setShowDetailsModal(false);
+                        setSelectedTripDetails(null);
+                    }}
+                />
+            )}
 
-            {
-                showDetailsModal && selectedTripDetails && (
-                    <TripDetailsModal
-                        trip={selectedTripDetails}
-                        onClose={() => {
-                            setShowDetailsModal(false);
-                            setSelectedTripDetails(null);
-                        }}
-                    />
-                )
-            }
-
-            {
-                invoiceTripId && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl relative">
-                            <button
-                                onClick={() => setInvoiceTripId(null)}
-                                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold"
-                            >✕</button>
+            {invoiceTripId && (
+                <div className="fixed inset-0 bg-[#0B0F1A]/60 backdrop-blur-sm flex items-center justify-center p-4 z-[150] animate-in fade-in duration-500">
+                    <div className="bg-card-dark rounded-[3rem] p-1 shadow-[0_50px_100px_rgba(0,0,0,0.2)] w-full max-w-2xl relative border border-border-dark max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-accent z-30"></div>
+                        <button
+                            type="button"
+                            onClick={() => setInvoiceTripId(null)}
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-bg-dark flex items-center justify-center text-text-muted hover:text-text-light transition-colors z-30 font-black shadow-sm"
+                        >✕</button>
+                        <div className="p-6 md:p-10 lg:p-14">
                             <Invoice
                                 tripId={invoiceTripId}
                                 currentUserRole={role}
                                 onPaymentComplete={() => {
-                                    // Optional: Refresh trip list if needed to update UI elsewhere
                                     dispatch(getAllTrips());
+                                    setInvoiceTripId(null);
                                 }}
                             />
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
-            {
-                showReassignModal && reassignTripId && reassignTripDetails && (
-                    <TripReassignmentModal
-                        isOpen={showReassignModal}
-                        onClose={() => {
-                            setShowReassignModal(false);
-                            setReassignTripId(null);
-                            setReassignTripDetails(null);
-                            dispatch(getAllTrips());
-                        }}
-                        tripId={reassignTripId}
-                        tripDetails={reassignTripDetails}
-                    />
-                )
-            }
-        </>
+            {showReassignModal && reassignTripId && reassignTripDetails && (
+                <TripReassignmentModal
+                    isOpen={showReassignModal}
+                    onClose={() => {
+                        setShowReassignModal(false);
+                        setReassignTripId(null);
+                        setReassignTripDetails(null);
+                        dispatch(getAllTrips());
+                    }}
+                    tripId={reassignTripId}
+                    tripDetails={reassignTripDetails}
+                />
+            )}
+        </div>
     );
 }
+
 
 

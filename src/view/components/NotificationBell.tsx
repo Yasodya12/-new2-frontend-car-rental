@@ -66,7 +66,7 @@ export function NotificationBell() {
             {/* Bell Icon */}
             <button
                 onClick={handleBellClick}
-                className="relative p-2 text-white hover:bg-blue-700 rounded-full transition-colors"
+                className="relative p-2 text-text-muted hover:text-primary hover:bg-bg-dark rounded-xl transition-all duration-300"
                 aria-label="Notifications"
             >
                 <svg
