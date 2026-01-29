@@ -204,7 +204,7 @@ export function Vehicle() {
 
 
     return (
-        <div className="min-h-screen bg-[#FDFDFF] p-6 lg:p-12 text-left font-sans">
+        <div className="min-h-screen bg-[#FDFDFF] px-6 lg:px-12 pb-12 pt-28 lg:pt-32 text-left font-sans">
             {/* 1. Header & Quick Metrics (Bento Style) */}
             <div className="flex flex-col lg:flex-row justify-between items-start gap-8 mb-16">
                 <div className="max-w-xl">

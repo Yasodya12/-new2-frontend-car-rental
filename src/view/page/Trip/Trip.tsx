@@ -983,23 +983,21 @@ export function Trip() {
                 className="group relative bg-white border border-gray-200 rounded-3xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
             >
                 {/* Ambient Background Glow */}
-                <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-5 transition-opacity duration-700 group-hover:opacity-10 ${
-                    isCompleted ? 'bg-emerald-400' :
+                <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-5 transition-opacity duration-700 group-hover:opacity-10 ${isCompleted ? 'bg-emerald-400' :
                         isProcessing ? 'bg-amber-400' :
                             isAccepted ? 'bg-blue-400' :
                                 'bg-gray-400'
-                }`}></div>
+                    }`}></div>
 
                 <div className="relative z-10">
                     {/* Header Section - Trip ID and Status (side by side) */}
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md transition-transform duration-500 group-hover:scale-110 ${
-                                isCompleted ? 'bg-emerald-50 text-emerald-600' :
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md transition-transform duration-500 group-hover:scale-110 ${isCompleted ? 'bg-emerald-50 text-emerald-600' :
                                     isProcessing ? 'bg-amber-50 text-amber-600' :
                                         isAccepted ? 'bg-blue-50 text-blue-600' :
                                             'bg-gray-50 text-gray-400'
-                            }`}>
+                                }`}>
                                 <FaRoute />
                             </div>
                             <div>
@@ -1008,12 +1006,11 @@ export function Trip() {
                             </div>
                         </div>
 
-                        <div className={`px-4 py-2 rounded-xl text-xs font-semibold border ${
-                            isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                        <div className={`px-4 py-2 rounded-xl text-xs font-semibold border ${isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                 isProcessing ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                     isAccepted ? 'bg-blue-50 text-blue-600 border-blue-200' :
                                         'bg-gray-50 text-gray-500 border-gray-200'
-                        }`}>
+                            }`}>
                             {trip.status}
                         </div>
                     </div>
@@ -1652,7 +1649,7 @@ export function Trip() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredTrips.map(trip => (
+                                        {filteredTrips.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(trip => (
                                             <tr key={trip._id} className="group bg-white hover:bg-blue-50/20 transition-all rounded-3xl cursor-pointer" onClick={() => { setSelectedTripDetails(trip); setShowDetailsModal(true); }}>
                                                 <td className="px-8 py-6 rounded-l-[1.8rem] border-y border-l border-gray-50">
                                                     <div className="flex items-center gap-4">
@@ -1701,6 +1698,7 @@ export function Trip() {
                                     </div>
                                 )}
                             </div>
+                            <Pagination totalItems={filteredTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} />
                         </div>
                     </div>
                 )}
@@ -1810,9 +1808,16 @@ export function Trip() {
                                     );
                                 }
 
+                                const indexOfLastItem = currentPage * itemsPerPage;
+                                const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                                const currentMyTrips = filteredMyTrips.slice(indexOfFirstItem, indexOfLastItem);
+
                                 return (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                        {filteredMyTrips.map(trip => renderTripCard(trip, false))}
+                                    <div className="space-y-12">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                            {currentMyTrips.map(trip => renderTripCard(trip, false))}
+                                        </div>
+                                        <Pagination totalItems={filteredMyTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} />
                                     </div>
                                 );
                             })()}
