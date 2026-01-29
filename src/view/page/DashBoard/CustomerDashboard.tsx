@@ -15,12 +15,16 @@ interface CustomerStats {
     activeBookingsCount: number;
     recentTrips: any[];
     monthlySpending: { _id: string; spending: number }[];
+    weeklySpending?: { _id: string; spending: number }[];
+    hourlySpending?: { _id: number; spending: number }[];
+    yearlySpending?: { _id: string; spending: number }[];
     favoriteDestinations: { location: string; count: number }[];
 }
 
 export function CustomerDashboard() {
     const [stats, setStats] = useState<CustomerStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [spendingView, setSpendingView] = useState<'Daily' | 'Weekly' | 'Monthly' | 'Yearly'>('Yearly');
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -136,7 +140,7 @@ export function CustomerDashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <Link to="/profile" className="relative z-10 w-full bg-white text-blue-600 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all hover:bg-gray-50 mt-6 shadow-sm">
+                            <Link to="/user" className="relative z-10 w-full bg-white text-blue-600 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all hover:bg-gray-50 mt-6 shadow-sm">
                                 View Profile
                             </Link>
                         </div>
@@ -194,8 +198,8 @@ export function CustomerDashboard() {
                                             <div className="text-right">
                                                 <p className="text-sm font-bold text-gray-900 mb-1 tracking-tight">Rs. {trip.price.toLocaleString()}</p>
                                                 <span className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
-                                                        trip.status === 'Cancelled' ? 'bg-red-50 text-red-700' :
-                                                            'bg-amber-50 text-amber-700'
+                                                    trip.status === 'Cancelled' ? 'bg-red-50 text-red-700' :
+                                                        'bg-amber-50 text-amber-700'
                                                     }`}>
                                                     {trip.status}
                                                 </span>
@@ -233,7 +237,7 @@ export function CustomerDashboard() {
                     </div>
 
                     {/* Trends Section - Refined */}
-                    {stats.monthlySpending.length > 0 && (
+                    {(stats.monthlySpending.length > 0 || stats.weeklySpending?.length || stats.hourlySpending?.length || stats.yearlySpending?.length) && (
                         <div className="bg-white rounded-3xl border border-gray-100 p-10 shadow-sm transition-all hover:shadow-md">
                             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                                 <div>
@@ -243,41 +247,95 @@ export function CustomerDashboard() {
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Finances.</h2>
                                 </div>
-                                <div className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 flex-1 max-w-[200px] text-center">
-                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Period</p>
-                                    <p className="text-xl font-bold text-gray-900 tracking-tight">LKR {(stats.totalSpent / 1000).toFixed(1)}K</p>
+                                <div className="flex gap-4">
+                                    <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto max-w-[200px] md:max-w-none no-scrollbar">
+                                        {['Daily', 'Weekly', 'Monthly', 'Yearly'].map((view) => (
+                                            <button
+                                                key={view}
+                                                onClick={() => setSpendingView(view as any)}
+                                                className={`px-3 py-2 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap ${spendingView === view
+                                                    ? 'bg-white text-blue-600 shadow-sm'
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                    }`}
+                                            >
+                                                {view}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 flex-1 min-w-[140px] text-center">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Period</p>
+                                        <p className="text-xl font-bold text-gray-900 tracking-tight">LKR {(stats.totalSpent / 1000).toFixed(1)}K</p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="relative pt-6">
-                                <div className="flex items-end justify-between h-48 gap-4 px-2">
-                                    {stats.monthlySpending.reverse().map((month, idx) => {
-                                        const maxSpending = Math.max(...stats.monthlySpending.map(m => m.spending));
-                                        const heightPercent = (month.spending / maxSpending) * 100;
-                                        const isHighest = month.spending === maxSpending;
+                            <div className="relative pt-6 overflow-x-auto no-scrollbar">
+                                <div className="flex items-end justify-between h-48 gap-4 px-2 min-w-[300px]">
+                                    {(() => {
+                                        let data: any[] = [];
+                                        if (spendingView === 'Daily') data = stats.hourlySpending || [];
+                                        else if (spendingView === 'Weekly') data = stats.weeklySpending || [];
+                                        else if (spendingView === 'Monthly') data = stats.monthlySpending || [];
+                                        else if (spendingView === 'Yearly') data = stats.yearlySpending || [];
 
-                                        return (
-                                            <div key={idx} className="flex flex-col items-center flex-1 group relative">
-                                                <div className="w-full relative flex flex-col items-center">
-                                                    <div
-                                                        className={`w-full max-w-[24px] rounded-md transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden ${isHighest ? 'bg-blue-600 shadow-lg shadow-blue-100' : 'bg-gray-100 group-hover:bg-gray-200'
-                                                            }`}
-                                                        style={{ height: `${Math.max(heightPercent, 12)}%` }}
-                                                    >
-                                                        <div className="absolute inset-x-0 top-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                                                            <span className="text-[7px] font-bold text-gray-900 whitespace-nowrap">{month.spending.toLocaleString()}</span>
+                                        // Backend generally sorts _id: -1 (Newest First).
+                                        // For Daily (Hourly), we sorted _id: 1 (Ascending).
+                                        // For others, we want Oldest -> Newest (Left -> Right), so we reverse if needed.
+                                        const chartData = spendingView === 'Daily' ? [...data] : [...data].reverse();
+
+                                        if (chartData.length === 0) {
+                                            return <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-bold uppercase tracking-widest">No data for this period</div>
+                                        }
+
+                                        const maxSpending = Math.max(...chartData.map(m => m.spending));
+
+                                        return chartData.map((item, idx) => {
+                                            const heightPercent = maxSpending > 0 ? (item.spending / maxSpending) * 100 : 0;
+                                            const isHighest = item.spending === maxSpending && maxSpending > 0;
+
+                                            // Format Label
+                                            let label = item._id.toString();
+                                            if (spendingView === 'Daily') {
+                                                // Hourly: 0, 1, 13, etc.
+                                                const hour = parseInt(item._id);
+                                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                                const h = hour % 12 || 12;
+                                                label = `${h}${ampm}`;
+                                            } else if (spendingView === 'Weekly') {
+                                                label = new Date(item._id).toLocaleDateString('en-US', { weekday: 'short' });
+                                            } else if (spendingView === 'Monthly') {
+                                                // Monthly (Daily data): 1st, 2nd.. or just "01", "02"
+                                                label = new Date(item._id).getDate().toString();
+                                            } else {
+                                                // Yearly (Monthly data): Jan, Feb
+                                                try {
+                                                    label = new Date(item._id + "-01").toLocaleDateString('en-US', { month: 'short' });
+                                                } catch (e) { label = item._id }
+                                            }
+
+                                            return (
+                                                <div key={idx} className="flex flex-col items-center flex-1 group relative min-w-[20px]">
+                                                    <div className="w-full relative flex flex-col items-center">
+                                                        <div
+                                                            className={`w-full max-w-[24px] rounded-md transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden ${isHighest ? 'bg-blue-600 shadow-lg shadow-blue-100' : 'bg-gray-200 group-hover:bg-gray-300'
+                                                                }`}
+                                                            style={{ height: `${Math.max(heightPercent, 12)}%` }}
+                                                        >
+                                                            <div className="absolute inset-x-0 top-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
+                                                                <span className="text-[7px] font-bold text-gray-900 whitespace-nowrap">{item.spending.toLocaleString()}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="mt-4 text-center">
-                                                    <p className={`text-[8px] font-bold uppercase tracking-widest ${isHighest ? 'text-blue-600' : 'text-gray-300'} transition-colors duration-500`}>
-                                                        {month._id || '•'}
-                                                    </p>
+                                                    <div className="mt-4 text-center">
+                                                        <p className={`text-[8px] font-bold uppercase tracking-widest ${isHighest ? 'text-blue-600' : 'text-gray-400'} transition-colors duration-500 whitespace-nowrap`}>
+                                                            {label}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        });
+                                    })()}
                                 </div>
                             </div>
                         </div>

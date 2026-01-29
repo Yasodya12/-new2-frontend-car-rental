@@ -37,10 +37,15 @@ export const getAllDrivers = createAsyncThunk(
 
 export const getDriversNearby = createAsyncThunk(
     'driver/getDriversNearby',
-    async ({ lat, lng, radius = 5, date, endDate }: { lat: number; lng: number; radius?: number; date?: string; endDate?: string }) => {
+    async ({ lat, lng, radius = 5, date, endDate, endLat, endLng, startDistrict, endDistrict }: { lat: number; lng: number; radius?: number; date?: string; endDate?: string, endLat?: number, endLng?: number, startDistrict?: string, endDistrict?: string }) => {
         let query = `api/v1/users/drivers/nearby?lat=${lat}&lng=${lng}&radius=${radius}`;
         if (date) query += `&date=${date}`;
         if (endDate) query += `&endDate=${endDate}`;
+        if (endLat !== undefined && endLng !== undefined) {
+            query += `&endLat=${endLat}&endLng=${endLng}`;
+        }
+        if (startDistrict) query += `&startDistrict=${encodeURIComponent(startDistrict)}`;
+        if (endDistrict) query += `&endDistrict=${encodeURIComponent(endDistrict)}`;
         const response = await backendApi.get(query);
         return await response.data;
     }

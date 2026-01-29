@@ -20,4 +20,5 @@ export interface UserData {
         lng?: number
         address?: string
     }
+    routeTripCount?: number;
 }

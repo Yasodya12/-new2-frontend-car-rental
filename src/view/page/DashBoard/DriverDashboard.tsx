@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { backendApi } from "../../../api";
 import { DashboardCard } from "../../common/DashboardCard/DashboardCard";
-import { FaRoute, FaCheckCircle, FaDollarSign, FaStar, FaMapMarkerAlt, FaChartLine, FaCar, FaTrophy } from 'react-icons/fa';
+import { FaRoute, FaCheckCircle, FaDollarSign, FaStar, FaStarHalfAlt, FaRegStar, FaMapMarkerAlt, FaChartLine, FaCar, FaTrophy } from 'react-icons/fa';
 import { Link } from "react-router-dom";
 
 interface DriverStats {
@@ -89,9 +89,9 @@ export function DriverDashboard() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
                         {/* Large Featured Card - Earnings */}
                         <div className="lg:col-span-5">
-                            <DashboardCard 
-                                label="Total Earnings" 
-                                value={`Rs. ${(stats.totalEarnings / 1000).toFixed(1)}K`} 
+                            <DashboardCard
+                                label="Total Earnings"
+                                value={`Rs. ${(stats.totalEarnings / 1000).toFixed(1)}K`}
                                 icon={<FaDollarSign />}
                                 color="accent"
                                 size="large"
@@ -99,22 +99,22 @@ export function DriverDashboard() {
                         </div>
                         {/* Smaller Cards Grid */}
                         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <DashboardCard 
-                                label="Total Trips" 
-                                value={stats.totalTrips} 
+                            <DashboardCard
+                                label="Total Trips"
+                                value={stats.totalTrips}
                                 icon={<FaRoute />}
                                 color="primary"
                             />
-                            <DashboardCard 
-                                label="Completed" 
-                                value={stats.completedTrips} 
+                            <DashboardCard
+                                label="Completed"
+                                value={stats.completedTrips}
                                 icon={<FaCheckCircle />}
                                 color="accent"
                                 progress={completionRate}
                             />
-                            <DashboardCard 
-                                label="Rating" 
-                                value={`${stats.avgRating.toFixed(1)}`} 
+                            <DashboardCard
+                                label="Rating"
+                                value={`${stats.avgRating.toFixed(1)}`}
                                 icon={<FaStar />}
                                 color="warning"
                             />
@@ -135,8 +135,8 @@ export function DriverDashboard() {
                                     </h2>
                                     <p className="text-text-muted text-sm">Your latest completed trips</p>
                                 </div>
-                                <Link 
-                                    to="/trips" 
+                                <Link
+                                    to="/trips"
                                     className="text-accent text-sm font-bold hover:underline flex items-center gap-2"
                                 >
                                     View All
@@ -154,8 +154,8 @@ export function DriverDashboard() {
                             ) : (
                                 <div className="space-y-4">
                                     {stats.recentTrips.map((trip, idx) => (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className="group bg-bg-dark/40 rounded-2xl p-5 border border-border-dark/50 hover:border-accent/50 hover:bg-bg-dark/60 transition-all cursor-pointer transform hover:scale-[1.02]"
                                         >
                                             <div className="flex items-start justify-between gap-4">
@@ -172,11 +172,10 @@ export function DriverDashboard() {
                                                                 <p className="text-text-muted">{trip.endLocation}</p>
                                                             </div>
                                                             <div className="flex items-center gap-4 mt-3">
-                                                                <span className={`px-4 py-1.5 rounded-xl text-xs font-bold ${
-                                                                    trip.status === 'Completed' ? 'bg-accent/20 text-accent border border-accent/40' :
+                                                                <span className={`px-4 py-1.5 rounded-xl text-xs font-bold ${trip.status === 'Completed' ? 'bg-accent/20 text-accent border border-accent/40' :
                                                                     trip.status === 'Cancelled' ? 'bg-danger/20 text-danger border border-danger/40' :
-                                                                    'bg-warning/20 text-warning border border-warning/40'
-                                                                }`}>
+                                                                        'bg-warning/20 text-warning border border-warning/40'
+                                                                    }`}>
                                                                     {trip.status}
                                                                 </span>
                                                             </div>
@@ -212,7 +211,7 @@ export function DriverDashboard() {
                                     <div className="flex items-end gap-3">
                                         <p className="text-4xl font-black text-accent leading-none">{stats.completionRate.toFixed(1)}%</p>
                                         <div className="flex-1 h-3 bg-bg-dark rounded-full overflow-hidden mb-1">
-                                            <div 
+                                            <div
                                                 className="h-full bg-gradient-to-r from-accent to-accent/70 rounded-full transition-all duration-1000"
                                                 style={{ width: `${stats.completionRate}%` }}
                                             ></div>
@@ -230,12 +229,18 @@ export function DriverDashboard() {
                                         <div>
                                             <p className="text-4xl font-black text-warning leading-none mb-2">{stats.avgRating.toFixed(1)}</p>
                                             <div className="flex gap-1">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <FaStar 
-                                                        key={star}
-                                                        className={`text-sm ${star <= Math.round(stats.avgRating) ? 'text-warning' : 'text-text-muted/30'}`}
-                                                    />
-                                                ))}
+                                                {[1, 2, 3, 4, 5].map((star) => {
+                                                    console.log(stats.avgRating)
+                                                    const rating = stats.avgRating;
+                                                    const isFull = star <= Math.floor(rating);
+                                                    const isHalf = !isFull && star === Math.ceil(rating) && rating % 1 >= 0.3; // Show half if decimal >= 0.3
+
+                                                    return (
+                                                        <span key={star} className="text-sm text-yellow-400">
+                                                            {isFull ? <FaStar /> : isHalf ? <FaStarHalfAlt /> : <FaRegStar className="text-gray-600" />}
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                         <p className="text-text-muted text-sm mb-1">/ 5.0</p>
@@ -268,17 +273,16 @@ export function DriverDashboard() {
                                 </h2>
                                 <div className="space-y-4">
                                     {stats.frequentRoutes.slice(0, 5).map((route, idx) => (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             className="group bg-bg-dark/40 rounded-2xl p-5 border border-border-dark/50 hover:border-primary/50 hover:bg-bg-dark/60 transition-all"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-xl shadow-lg ${
-                                                        idx === 0 ? 'bg-gradient-to-br from-warning to-warning/70 text-bg-dark' :
+                                                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-xl shadow-lg ${idx === 0 ? 'bg-gradient-to-br from-warning to-warning/70 text-bg-dark' :
                                                         idx === 1 ? 'bg-gradient-to-br from-text-muted to-text-muted/70 text-bg-dark' :
-                                                        'bg-gradient-to-br from-primary to-primary/70 text-white'
-                                                    }`}>
+                                                            'bg-gradient-to-br from-primary to-primary/70 text-white'
+                                                        }`}>
                                                         {idx + 1}
                                                     </div>
                                                     <div>
@@ -311,7 +315,7 @@ export function DriverDashboard() {
                                             const maxEarnings = Math.max(...stats.monthlyEarnings.map(m => m.earnings));
                                             const heightPercent = (month.earnings / maxEarnings) * 100;
                                             const isHighest = month.earnings === maxEarnings;
-                                            
+
                                             return (
                                                 <div key={idx} className="flex flex-col items-center flex-1 group relative">
                                                     {/* Tooltip */}
@@ -319,22 +323,21 @@ export function DriverDashboard() {
                                                         Rs. {month.earnings.toFixed(2)}
                                                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border-dark"></div>
                                                     </div>
-                                                    
+
                                                     {/* Bar */}
                                                     <div className="w-full relative flex flex-col items-center">
                                                         <div
-                                                            className={`w-full rounded-t-2xl transition-all duration-500 relative overflow-hidden group/bar ${
-                                                                isHighest 
-                                                                    ? 'bg-gradient-to-t from-accent via-accent/90 to-accent/70 shadow-lg shadow-accent/50' 
-                                                                    : 'bg-gradient-to-t from-accent/70 via-accent/60 to-accent/50'
-                                                            }`}
+                                                            className={`w-full rounded-t-2xl transition-all duration-500 relative overflow-hidden group/bar ${isHighest
+                                                                ? 'bg-gradient-to-t from-accent via-accent/90 to-accent/70 shadow-lg shadow-accent/50'
+                                                                : 'bg-gradient-to-t from-accent/70 via-accent/60 to-accent/50'
+                                                                }`}
                                                             style={{ height: `${heightPercent}%`, minHeight: '40px' }}
                                                         >
                                                             {/* Animated shine effect */}
                                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover/bar:translate-x-full transition-transform duration-1000"></div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     {/* Month Label */}
                                                     <div className="mt-4 text-center">
                                                         <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{month._id}</p>
@@ -346,7 +349,7 @@ export function DriverDashboard() {
                                             );
                                         })}
                                     </div>
-                                    
+
                                     {/* Chart Grid Lines */}
                                     <div className="absolute inset-0 pointer-events-none">
                                         {[0, 25, 50, 75, 100].map((percent) => (

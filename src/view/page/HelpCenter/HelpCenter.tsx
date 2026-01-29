@@ -100,7 +100,7 @@ export function HelpCenter() {
                 {[
                     { label: "Total Requests", value: displayTickets.length, color: "text-text-light" },
                     { label: "Active Threads", value: displayTickets.filter(t => t.status !== 'Resolved').length, color: "text-warning" },
-                    { label: "Resolution Index", value: `${displayTickets.length > 0 ? Math.round((displayTickets.filter(t => t.status === 'Resolved').length / displayTickets.length) * 100) : 0}%`, color: "text-accent" },
+                    { label: "Resolved As % ", value: `${displayTickets.length > 0 ? Math.round((displayTickets.filter(t => t.status === 'Resolved').length / displayTickets.length) * 100) : 0}%`, color: "text-accent" },
                     { label: "Response Latency", value: "< 24H", color: "text-primary" }
                 ].map((stat, i) => (
                     <div key={i} className="bg-card-dark border border-border-dark rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">

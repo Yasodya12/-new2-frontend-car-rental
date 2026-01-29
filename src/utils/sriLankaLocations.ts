@@ -55,3 +55,17 @@ export const formatLocation = (province: string, district: string): string => {
     return `${district}, ${province}`;
 };
 
+export const extractDistrictFromAddress = (address: string): string => {
+    if (!address) return "";
+    const allDistricts = getAllDistricts();
+    // Sort by length slightly helps avoid partial matches if names are similar, 
+    // though distinct names are usually fine.
+    // We look for the district name in the address string (case-insensitive)
+    for (const district of allDistricts) {
+        if (address.toLowerCase().includes(district.toLowerCase())) {
+            return district;
+        }
+    }
+    return "";
+};
+
