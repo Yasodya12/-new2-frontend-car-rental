@@ -1,6 +1,7 @@
 import { Footer } from "../Footer/Footer.tsx";
 import { MainContent } from "../MainContent/MainContent.tsx";
 import { Navbar } from "../Navbar/Navbar.tsx";
+import { AdminSidebar } from "../AdminSidebar/AdminSidebar.tsx";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../store/store.ts";
@@ -13,6 +14,8 @@ export function DefaultLayout() {
     const { role, token, user } = useSelector((state: RootState) => state.auth);
     const { totalUnreadCount } = useSelector((state: RootState) => state.chat);
     const [isChatOpen, setIsChatOpen] = useState(false);
+
+    const isAdmin = role === 'admin';
 
     useEffect(() => {
         if (token && role !== 'admin') {
@@ -31,7 +34,10 @@ export function DefaultLayout() {
         <div className="flex flex-col min-h-screen bg-bg-dark relative">
             <Navbar />
 
-            <main className="flex-grow">
+            {/* Admin Sidebar */}
+            <AdminSidebar isAdmin={isAdmin} />
+
+            <main className={`flex-grow transition-all duration-300 ${isAdmin ? 'lg:ml-56' : ''}`}>
                 <MainContent />
             </main>
 

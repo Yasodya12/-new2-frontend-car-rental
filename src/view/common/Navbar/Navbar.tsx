@@ -89,8 +89,8 @@ export function Navbar() {
     };
 
     return (
-        <nav className="bg-card-dark border-b border-border-dark shadow-lg relative z-[100]">
-            <div className="max-w-7xl mx-auto px-4 lg:px-6 relative z-[110]">
+        <nav className="bg-card-dark border-b border-border-dark shadow-lg fixed top-0 left-0 w-full z-[100]">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 relative z-[110]">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3">
@@ -112,50 +112,6 @@ export function Navbar() {
                             </Link>
                         )}
 
-                        {/* Admin Dropdown */}
-                        {user && user.role === 'admin' && (
-                            <div className="relative">
-                                <button
-                                    onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                                    className="flex items-center gap-1 text-text-muted hover:text-primary transition-colors font-medium"
-                                >
-                                    Admin
-                                    <FaChevronDown className={`text-xs transition-transform ${adminMenuOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {adminMenuOpen && (
-                                    <div className="absolute top-full left-0 mt-2 w-56 bg-card-dark border border-border-dark rounded-xl shadow-2xl py-2 z-[120]">
-                                        <Link
-                                            to="/live-map"
-                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
-                                            onClick={() => setAdminMenuOpen(false)}
-                                        >
-                                            🌍 Live Map
-                                        </Link>
-                                        <Link
-                                            to="/admin/chat"
-                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
-                                            onClick={() => setAdminMenuOpen(false)}
-                                        >
-                                            💬 Messages
-                                        </Link>
-                                        <Link
-                                            to="/admin/approvals"
-                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
-                                            onClick={() => setAdminMenuOpen(false)}
-                                        >
-                                            👤 Driver Approvals
-                                        </Link>
-                                        <Link
-                                            to="/promotions"
-                                            className="block px-4 py-2 text-text-muted hover:bg-bg-dark hover:text-primary transition-colors"
-                                            onClick={() => setAdminMenuOpen(false)}
-                                        >
-                                            🏷️ Promotions
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         {/* Common Links */}
                         <Link to="/trips" className="text-text-muted hover:text-primary transition-colors font-medium">
@@ -258,14 +214,7 @@ export function Navbar() {
                     <div className="lg:hidden border-t border-border-dark py-4 space-y-2">
                         <Link to="/" className="block px-4 py-2 text-text-muted hover:text-primary">Home</Link>
                         {user && <Link to="/dashboard" className="block px-4 py-2 text-text-muted hover:text-primary">Dashboard</Link>}
-                        {user && user.role === 'admin' && (
-                            <>
-                                <Link to="/live-map" className="block px-4 py-2 text-text-muted hover:text-primary">Live Map</Link>
-                                <Link to="/admin/chat" className="block px-4 py-2 text-text-muted hover:text-primary">Messages</Link>
-                                <Link to="/admin/approvals" className="block px-4 py-2 text-text-muted hover:text-primary">Driver Approvals</Link>
-                                <Link to="/promotions" className="block px-4 py-2 text-text-muted hover:text-primary">Promotions</Link>
-                            </>
-                        )}
+
                         <Link to="/trips" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Trips</Link>
                         <Link to="/vehicles" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Vehicles</Link>
                         {user && user.role !== 'admin' && <Link to="/driver" className="block px-4 py-2 text-text-muted hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>Drivers</Link>}
