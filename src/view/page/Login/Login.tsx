@@ -52,7 +52,7 @@ export function Login() {
 
             if (user.role === 'customer' || user.role === 'driver') {
                 alert("Login successful.");
-                navigate("/home");
+                navigate("/");
             } else if (user.role === 'admin') {
                 alert("Login successful.");
                 navigate("/dashboard");
@@ -101,7 +101,7 @@ export function Login() {
 
             if (user.role === 'customer' || user.role === 'driver') {
                 alert("Login successful.");
-                navigate("/home");
+                navigate("/");
             } else if (user.role === 'admin') {
                 alert("Login successful.");
                 navigate("/dashboard");

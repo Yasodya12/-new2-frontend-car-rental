@@ -36,7 +36,7 @@ export function CompleteProfile() {
             localStorage.setItem("profileComplete", "true");
 
             alert("Profile completed successfully!");
-            navigate("/home");
+            navigate("/");
         } catch (err: any) {
             console.error("Profile update error:", err);
             const errorMsg = err.response?.data?.error || "Failed to update profile. Please try again.";

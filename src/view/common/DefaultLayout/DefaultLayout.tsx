@@ -37,7 +37,7 @@ export function DefaultLayout() {
             {/* Admin Sidebar */}
             <AdminSidebar isAdmin={isAdmin} />
 
-            <main className={`flex-grow transition-all duration-300 ${isAdmin ? 'lg:ml-56' : ''}`}>
+            <main className={`flex-grow transition-all duration-300 pt-16 ${isAdmin ? 'lg:ml-56' : ''}`}>
                 <MainContent />
             </main>
 

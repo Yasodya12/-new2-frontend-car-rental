@@ -14,23 +14,45 @@ import { Documents } from "../../page/Driver/Documents.tsx";
 import { AdminDocuments } from "../../page/Admin/AdminDocuments.tsx";
 import { ChangePassword } from "../../page/User/ChangePassword.tsx";
 
+import { ProtectedRoute } from "../../components/ProtectedRoute.tsx";
+
 export function MainContent() {
     return (
         <div className="MainContent w-full">
             <Routes>
                 <Route path="/" element={<MainLayout><Home /></MainLayout>}></Route>
                 <Route path="/trips/*" element={<MainLayout><Trip /></MainLayout>}></Route>
-                <Route path="/vehicles" element={<MainLayout><Vehicle /></MainLayout>}></Route>
+                <Route path="/vehicles" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><Vehicle /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
                 <Route path="/driver" element={<MainLayout><Driver /></MainLayout>}></Route>
                 <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>}></Route>
-                <Route path="/live-map" element={<MainLayout><LiveFleetMap /></MainLayout>}></Route>
-                <Route path="/admin/chat" element={<MainLayout><AdminChat /></MainLayout>}></Route>
-                <Route path="/promotions" element={<MainLayout><Promotions /></MainLayout>}></Route>
+                <Route path="/live-map" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><LiveFleetMap /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
+                <Route path="/admin/chat" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><AdminChat /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
+                <Route path="/promotions" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><Promotions /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
                 <Route path="/help-center" element={<MainLayout><HelpCenter /></MainLayout>}></Route>
                 <Route path="/user" element={<MainLayout><User /></MainLayout>}></Route>
                 <Route path="/change-password" element={<MainLayout><ChangePassword /></MainLayout>}></Route>
                 <Route path="/documents" element={<MainLayout><Documents /></MainLayout>}></Route>
-                <Route path="/admin/approvals" element={<MainLayout><AdminDocuments /></MainLayout>}></Route>
+                <Route path="/admin/approvals" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><AdminDocuments /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
             </Routes>
         </div>
 
