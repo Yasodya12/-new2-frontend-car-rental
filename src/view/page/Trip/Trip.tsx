@@ -220,6 +220,7 @@ export function Trip() {
     const [activeTab, setActiveTab] = useState<'All' | 'Instant' | 'Scheduled'>('All');
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [currentPage, setCurrentPage] = useState(1);
+    const [driverViewMode, setDriverViewMode] = useState<'assigned' | 'radar'>('assigned');
     const itemsPerPage = 10;
 
     // Reset page on filter change
@@ -984,9 +985,9 @@ export function Trip() {
             >
                 {/* Ambient Background Glow */}
                 <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-5 transition-opacity duration-700 group-hover:opacity-10 ${isCompleted ? 'bg-emerald-400' :
-                        isProcessing ? 'bg-amber-400' :
-                            isAccepted ? 'bg-blue-400' :
-                                'bg-gray-400'
+                    isProcessing ? 'bg-amber-400' :
+                        isAccepted ? 'bg-blue-400' :
+                            'bg-gray-400'
                     }`}></div>
 
                 <div className="relative z-10">
@@ -994,9 +995,9 @@ export function Trip() {
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-3">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md transition-transform duration-500 group-hover:scale-110 ${isCompleted ? 'bg-emerald-50 text-emerald-600' :
-                                    isProcessing ? 'bg-amber-50 text-amber-600' :
-                                        isAccepted ? 'bg-blue-50 text-blue-600' :
-                                            'bg-gray-50 text-gray-400'
+                                isProcessing ? 'bg-amber-50 text-amber-600' :
+                                    isAccepted ? 'bg-blue-50 text-blue-600' :
+                                        'bg-gray-50 text-gray-400'
                                 }`}>
                                 <FaRoute />
                             </div>
@@ -1007,9 +1008,9 @@ export function Trip() {
                         </div>
 
                         <div className={`px-4 py-2 rounded-xl text-xs font-semibold border ${isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                isProcessing ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                    isAccepted ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                        'bg-gray-50 text-gray-500 border-gray-200'
+                            isProcessing ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                isAccepted ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                    'bg-gray-50 text-gray-500 border-gray-200'
                             }`}>
                             {trip.status}
                         </div>
@@ -1529,9 +1530,15 @@ export function Trip() {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleApplyPromo}
-                                                                className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
+                                                                disabled={isValidatingPromo}
+                                                                className={`bg-white text-blue-600 hover:bg-blue-50 px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 ${isValidatingPromo ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                             >
-                                                                Apply
+                                                                {isValidatingPromo ? (
+                                                                    <>
+                                                                        <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                                                        Verifying...
+                                                                    </>
+                                                                ) : "Apply"}
                                                             </button>
                                                         )}
                                                     </div>
@@ -1613,28 +1620,30 @@ export function Trip() {
                                     <p className="text-gray-400 font-bold uppercase tracking-[0.15em] text-[10px] ml-1">Observing {filteredTrips.length} global logistics vectors</p>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-4 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
-                                    {['All', 'Instant', 'Scheduled'].map((tab) => (
+                                <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                                    {(['All', 'Instant', 'Scheduled'] as const).map((tab) => (
                                         <button
                                             key={tab}
                                             type="button"
-                                            onClick={() => setActiveTab(tab as any)}
-                                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-lg shadow-blue-500/5' : 'text-gray-400 hover:text-gray-600'}`}
+                                            onClick={() => setActiveTab(tab)}
+                                            className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                                         >
                                             {tab} Units
                                         </button>
                                     ))}
-                                    <div className="w-px h-6 bg-gray-200 mx-2"></div>
-                                    <select
-                                        value={filterStatus}
-                                        onChange={(e) => setFilterStatus(e.target.value)}
-                                        className="bg-transparent text-[10px] font-black uppercase tracking-widest text-gray-500 focus:outline-none cursor-pointer pr-4"
-                                    >
-                                        <option value="All">All Logistics</option>
-                                        {['Pending', 'Accepted', 'Processing', 'Completed', 'Paid', 'Cancelled', 'Rejected'].map(s => (
-                                            <option key={s} value={s}>{s}</option>
+                                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        {(['All', 'Pending', 'Accepted', 'Processing', 'Completed', 'Paid', 'Cancelled'] as const).map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setFilterStatus(s)}
+                                                className={`px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.1em] transition-all ${filterStatus === s ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`}
+                                            >
+                                                {s}
+                                            </button>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1707,58 +1716,85 @@ export function Trip() {
                 {/* 3. DRIVER MISSION PULSE */}
                 {((user?.role?.toLowerCase() || role?.toLowerCase()) === "driver") && (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                        {/* Availablity Control */}
-                        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-10 shadow-[0_40px_90px_rgba(0,0,0,0.04)] border border-white/20 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
+                        {/* Tab Switcher & Availablity Control */}
+                        <div className="flex flex-col gap-10">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                                <div className="flex items-center gap-2 bg-gray-100/80 p-1.5 rounded-[2rem] border border-gray-200 shadow-inner">
+                                    <button
+                                        onClick={() => setDriverViewMode('assigned')}
+                                        className={`px-10 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 ${driverViewMode === 'assigned'
+                                            ? 'bg-white text-blue-600 shadow-xl'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${driverViewMode === 'assigned' ? 'bg-blue-600 animate-pulse' : 'bg-transparent'}`}></div>
+                                        For You
+                                    </button>
+                                    <button
+                                        onClick={() => setDriverViewMode('radar')}
+                                        className={`px-10 py-4 rounded-[1.5rem] text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 relative ${driverViewMode === 'radar'
+                                            ? 'bg-white text-purple-600 shadow-xl'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        <div className={`w-2 h-2 rounded-full ${driverViewMode === 'radar' ? 'bg-purple-600 animate-pulse' : 'bg-transparent'}`}></div>
+                                        Trip Radar
+                                        {(() => {
+                                            const count = driverTrips.filter(t => t.isBroadcast && t.status === "Pending").length;
+                                            return count > 0 && (
+                                                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[10px] font-black text-white shadow-lg ring-2 ring-white">
+                                                    {count}
+                                                </span>
+                                            );
+                                        })()}
+                                    </button>
+                                </div>
 
-                            <div className="flex items-center gap-6 relative z-10">
-                                <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-2xl transition-all duration-700 ${user?.isAvailable !== false ? 'bg-emerald-500 shadow-emerald-500/30 ring-4 ring-emerald-50' : 'bg-gray-200 shadow-gray-200/30'}`}>
-                                    <FaUser className="text-white text-2xl" />
-                                </div>
-                                <div>
-                                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Driver Control Module</h2>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <div className={`w-2 h-2 rounded-full ${user?.isAvailable !== false ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                                        <span className={`font-black uppercase tracking-[0.2em] text-[10px] ${user?.isAvailable !== false ? 'text-emerald-500' : 'text-gray-400'}`}>
-                                            {user?.isAvailable !== false ? 'Current Status Available' : 'Current Status Unavailable'}
-                                        </span>
-                                    </div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (user?._id) {
+                                            try {
+                                                const response = await backendApi.patch(`/api/v1/users/toggle-availability/${user._id}`);
+                                                setUser(response.data);
+                                            } catch (error) { console.error(error); }
+                                        }
+                                    }}
+                                    className={`relative z-10 px-10 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.25em] transition-all shadow-2xl active:scale-95 flex items-center gap-4 ${user?.isAvailable !== false
+                                        ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                        : 'bg-gray-100 text-gray-400 border border-gray-200'
+                                        }`}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${user?.isAvailable !== false ? 'bg-white animate-ping' : 'bg-gray-400'}`}></div>
+                                    {user?.isAvailable !== false ? 'Operations Active' : 'System Offline'}
+                                </button>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    if (user?._id) {
-                                        try {
-                                            const response = await backendApi.patch(`/api/v1/users/toggle-availability/${user._id}`);
-                                            setUser(response.data);
-                                        } catch (error) { console.error(error); }
-                                    }
-                                }}
-                                className={`relative z-10 px-12 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.25em] transition-all shadow-2xl active:scale-95 ${user?.isAvailable !== false
-                                    ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 shadow-amber-200/20'
-                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/30'
-                                    }`}
-                            >
-                                {user?.isAvailable !== false ? 'Set As Unavailable' : 'Set As Available'}
-                            </button>
                         </div>
 
                         {/* Marketplace Broadcasting Section */}
-                        {(() => {
+                        {driverViewMode === 'radar' && (() => {
                             const marketplaceTrips = driverTrips.filter(t => t.isBroadcast && t.status === "Pending");
-                            if (marketplaceTrips.length === 0) return null;
+                            if (marketplaceTrips.length === 0) {
+                                return (
+                                    <div className="bg-white/50 backdrop-blur-xl rounded-[3rem] p-32 text-center border-2 border-dashed border-gray-100">
+                                        <div className="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mx-auto mb-10 text-gray-100">
+                                            <FaRoute size={40} />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Radar Clear</h3>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">No broadcast signals detected in your sector</p>
+                                    </div>
+                                );
+                            }
                             return (
-                                <section className="space-y-8">
+                                <section className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
                                     <div className="flex items-center justify-between px-6">
                                         <div className="flex items-center gap-4">
                                             <div className="px-3 py-1 bg-purple-100 text-purple-600 rounded-lg text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-ping"></div> Live Broadcast
                                             </div>
-                                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Unassign Driver Trips</h3>
+                                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Active Marketplace</h3>
                                         </div>
-                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{marketplaceTrips.length} Operational Nodes</span>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{marketplaceTrips.length} Signals Detected</span>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                         {marketplaceTrips.map(trip => renderTripCard(trip, true))}
@@ -1768,60 +1804,62 @@ export function Trip() {
                         })()}
 
                         {/* Personal Mission Ledger */}
-                        <section className="space-y-10">
-                            <div className="flex flex-col md:flex-row justify-between items-end gap-10 px-6">
-                                <div>
-                                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">Personal Operational Ledger</h3>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Historical & active logistics tracking</p>
+                        {driverViewMode === 'assigned' && (
+                            <section className="space-y-10 animate-in fade-in slide-in-from-top-4 duration-700">
+                                <div className="flex flex-col md:flex-row justify-between items-end gap-10 px-6">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Assigned Operational Ledger</h3>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Historical & active logistics tracking</p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                                        {(['All', 'Pending', 'Accepted', 'Processing', 'Completed', 'Paid', 'Cancelled'] as const).map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => setFilterStatus(s)}
+                                                className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'bg-white text-blue-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
-                                    {(['All', 'Pending', 'Accepted', 'Processing', 'Completed'] as const).map(s => (
-                                        <button
-                                            key={s}
-                                            type="button"
-                                            onClick={() => setFilterStatus(s)}
-                                            className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'bg-white text-blue-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
 
-                            {(() => {
-                                const myTrips = driverTrips.filter(t => !(t.isBroadcast && t.status === "Pending"));
-                                const filteredMyTrips = myTrips.filter(trip => {
-                                    if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
-                                    if (activeTab !== 'All' && trip.tripType !== activeTab) return false;
-                                    return true;
-                                }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+                                {(() => {
+                                    const myTrips = driverTrips.filter(t => !(t.isBroadcast && t.status === "Pending"));
+                                    const filteredMyTrips = myTrips.filter(trip => {
+                                        if (filterStatus !== 'All' && trip.status !== filterStatus) return false;
+                                        if (activeTab !== 'All' && trip.tripType !== activeTab) return false;
+                                        return true;
+                                    }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-                                if (filteredMyTrips.length === 0) {
-                                    return (
-                                        <div className="bg-white/50 backdrop-blur-xl rounded-[3rem] p-24 text-center border-2 border-dashed border-gray-100">
-                                            <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-8 text-gray-100">
-                                                <HiTruck size={40} />
+                                    if (filteredMyTrips.length === 0) {
+                                        return (
+                                            <div className="bg-white/50 backdrop-blur-xl rounded-[3rem] p-24 text-center border-2 border-dashed border-gray-100">
+                                                <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-8 text-gray-100">
+                                                    <HiTruck size={40} />
+                                                </div>
+                                                <p className="text-xl font-black text-gray-900 tracking-tight lowercase first-letter:uppercase italic font-serif">No missions inscribed in ledger</p>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">Awaiting operational requisition...</p>
                                             </div>
-                                            <p className="text-xl font-black text-gray-900 tracking-tight lowercase first-letter:uppercase italic font-serif">No missions inscribed in ledger</p>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">Awaiting operational requisition...</p>
+                                        );
+                                    }
+
+                                    const indexOfLastItem = currentPage * itemsPerPage;
+                                    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                                    const currentMyTrips = filteredMyTrips.slice(indexOfFirstItem, indexOfLastItem);
+
+                                    return (
+                                        <div className="space-y-12">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                                {currentMyTrips.map(trip => renderTripCard(trip, false))}
+                                            </div>
+                                            <Pagination totalItems={filteredMyTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} />
                                         </div>
                                     );
-                                }
-
-                                const indexOfLastItem = currentPage * itemsPerPage;
-                                const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-                                const currentMyTrips = filteredMyTrips.slice(indexOfFirstItem, indexOfLastItem);
-
-                                return (
-                                    <div className="space-y-12">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                            {currentMyTrips.map(trip => renderTripCard(trip, false))}
-                                        </div>
-                                        <Pagination totalItems={filteredMyTrips.length} currentPage={currentPage} onPageChange={setCurrentPage} itemsPerPage={itemsPerPage} />
-                                    </div>
-                                );
-                            })()}
-                        </section>
+                                })()}
+                            </section>
+                        )}
                     </div>
                 )}
 
@@ -1838,17 +1876,32 @@ export function Trip() {
                                 </div>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Comprehensive archive of your transit logistics</p>
                             </div>
-                            <div className="flex flex-wrap items-center gap-4 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 backdrop-blur-xl">
-                                {(['All', 'Instant', 'Scheduled'] as const).map(tab => (
-                                    <button
-                                        key={tab}
-                                        type="button"
-                                        onClick={() => setActiveTab(tab)}
-                                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-xl' : 'text-gray-400 hover:text-gray-600'}`}
-                                    >
-                                        {tab} History
-                                    </button>
-                                ))}
+                            <div className="flex flex-col md:flex-row items-end md:items-center gap-6 bg-gray-50/50 p-3 rounded-3xl border border-gray-100 backdrop-blur-xl">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {(['All', 'Instant', 'Scheduled'] as const).map(tab => (
+                                        <button
+                                            key={tab}
+                                            type="button"
+                                            onClick={() => setActiveTab(tab)}
+                                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-xl' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            {tab} History
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="hidden md:block w-px h-8 bg-gray-200/50 mx-2"></div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {(['All', 'Pending', 'Processing', 'Completed', 'Paid', 'Cancelled'] as const).map(s => (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            onClick={() => setFilterStatus(s)}
+                                            className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white/50 text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
