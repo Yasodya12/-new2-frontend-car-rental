@@ -1,17 +1,6 @@
 import React from 'react';
 
-interface Message {
-    _id: string;
-    senderId: {
-        _id: string;
-        name: string;
-        role: string;
-        profileImage?: string;
-    };
-    content: string;
-    createdAt: string;
-    isRead: boolean;
-}
+import type { ChatMessage as Message } from '../../utils/chatService';
 
 interface MessageListProps {
     messages: Message[];

@@ -9,8 +9,15 @@ import { HiArrowRight } from 'react-icons/hi';
 import { CustomerDashboard } from "../DashBoard/CustomerDashboard.tsx";
 import { DriverDashboard } from "../DashBoard/DriverDashboard.tsx";
 
+interface User {
+    _id: string;
+    name: string;
+    role: 'customer' | 'driver' | 'admin';
+    profileImage?: string;
+}
+
 export function Home() {
-    const user = useSelector((state: RootState) => state.auth.user) as any;
+    const user = useSelector((state: RootState) => state.auth.user) as User | null;
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [mounted, setMounted] = useState(false);

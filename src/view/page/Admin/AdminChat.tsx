@@ -6,30 +6,7 @@ import MessageInput from '../../component/MessageInput';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../store/store';
 
-interface Message {
-    _id: string;
-    senderId: {
-        _id: string;
-        name: string;
-        role: string;
-        profileImage?: string;
-    };
-    content: string;
-    createdAt: string;
-    isRead: boolean;
-}
-
-interface Conversation {
-    _id: string;
-    participants: any[];
-    participantRoles: Array<{
-        userId: string;
-        role: string;
-    }>;
-    lastMessage: string;
-    lastMessageTime: string;
-    unreadCount: Map<string, number>;
-}
+import type { ChatMessage as Message, Conversation, NewMessageData, TypingData } from '../../../utils/chatService';
 
 const AdminChat: React.FC = () => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -41,7 +18,7 @@ const AdminChat: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const token = useSelector((state: RootState) => state.auth.token);
-    const currentUser = useSelector((state: RootState) => state.auth.user) as any;
+    const currentUser = useSelector((state: RootState) => state.auth.user) as { _id: string; name: string; role: string } | null;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,7 +51,7 @@ const AdminChat: React.FC = () => {
             await loadConversations();
 
             // Set up socket listeners
-            const handleNewMessage = (data: any) => {
+            const handleNewMessage = (data: NewMessageData) => {
                 setMessages(prev => {
                     // Check if message already exists
                     if (prev.some(msg => msg._id === data.message._id)) {
@@ -92,7 +69,7 @@ const AdminChat: React.FC = () => {
                 }
             };
 
-            const handleTyping = (data: any) => {
+            const handleTyping = (data: TypingData) => {
                 if (selectedConversation && data.conversationId === selectedConversation._id && data.userId !== currentUser?._id) {
                     setIsTyping(data.isTyping);
                 }
@@ -165,8 +142,7 @@ const AdminChat: React.FC = () => {
 
     const getUnreadCount = (conversation: Conversation) => {
         if (currentUser?._id) {
-            const unreadMap = conversation.unreadCount as any;
-            return unreadMap?.[currentUser._id] || 0;
+            return conversation.unreadCount[currentUser._id] || 0;
         }
         return 0;
     };

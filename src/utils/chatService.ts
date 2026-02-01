@@ -2,6 +2,56 @@ import { io, Socket } from 'socket.io-client';
 
 const SOCKET_URL = 'http://localhost:3000';
 
+export interface ChatMessage {
+    _id: string;
+    senderId: {
+        _id: string;
+        name: string;
+        role: string;
+        profileImage?: string;
+    };
+    content: string;
+    createdAt: string;
+    isRead: boolean;
+}
+
+export interface NewMessageData {
+    message: ChatMessage;
+    conversationId: string;
+}
+
+export interface TypingData {
+    conversationId: string;
+    userId: string;
+    isTyping: boolean;
+}
+
+export interface MessageReadData {
+    conversationId: string;
+    userId?: string;
+}
+
+export interface Conversation {
+    _id: string;
+    participants: Array<{
+        _id: string;
+        name: string;
+        role: string;
+        profileImage?: string;
+    }>;
+    participantRoles: Array<{
+        userId: string;
+        role: string;
+    }>;
+    lastMessage?: string;
+    lastMessageTime?: string;
+    unreadCount: Record<string, number>;
+}
+
+export interface ChatError {
+    message: string;
+}
+
 class ChatService {
     private socket: Socket | null = null;
 
@@ -28,7 +78,7 @@ class ChatService {
             console.log('❌ Chat socket disconnected');
         });
 
-        this.socket.on('connect_error', (error) => {
+        this.socket.on('connect_error', (error: Error) => {
             console.error('Chat socket connection error:', error.message);
         });
 
@@ -74,49 +124,49 @@ class ChatService {
         }
     }
 
-    onNewMessage(callback: (data: any) => void) {
+    onNewMessage(callback: (data: NewMessageData) => void) {
         if (this.socket) {
             this.socket.on('chat:message:new', callback);
         }
     }
 
-    onTyping(callback: (data: any) => void) {
+    onTyping(callback: (data: TypingData) => void) {
         if (this.socket) {
             this.socket.on('chat:typing', callback);
         }
     }
 
-    onMessageRead(callback: (data: any) => void) {
+    onMessageRead(callback: (data: MessageReadData) => void) {
         if (this.socket) {
             this.socket.on('chat:message:read', callback);
         }
     }
 
-    onError(callback: (error: any) => void) {
+    onError(callback: (error: ChatError) => void) {
         if (this.socket) {
             this.socket.on('chat:error', callback);
         }
     }
 
-    offNewMessage(callback: (data: any) => void) {
+    offNewMessage(callback: (data: NewMessageData) => void) {
         if (this.socket) {
             this.socket.off('chat:message:new', callback);
         }
     }
 
-    offTyping(callback: (data: any) => void) {
+    offTyping(callback: (data: TypingData) => void) {
         if (this.socket) {
             this.socket.off('chat:typing', callback);
         }
     }
 
-    offMessageRead(callback: (data: any) => void) {
+    offMessageRead(callback: (data: MessageReadData) => void) {
         if (this.socket) {
             this.socket.off('chat:message:read', callback);
         }
     }
 
-    offError(callback: (error: any) => void) {
+    offError(callback: (error: ChatError) => void) {
         if (this.socket) {
             this.socket.off('chat:error', callback);
         }
