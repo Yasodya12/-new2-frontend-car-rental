@@ -13,6 +13,7 @@ import { HelpCenter } from "../../page/HelpCenter/HelpCenter.tsx";
 import { Documents } from "../../page/Driver/Documents.tsx";
 import { AdminDocuments } from "../../page/Admin/AdminDocuments.tsx";
 import { ChangePassword } from "../../page/User/ChangePassword.tsx";
+import { DemandHotspots } from "../../page/Admin/DemandHotspots.tsx";
 
 import { ProtectedRoute } from "../../components/ProtectedRoute.tsx";
 
@@ -51,6 +52,11 @@ export function MainContent() {
                 <Route path="/admin/approvals" element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <MainLayout><AdminDocuments /></MainLayout>
+                    </ProtectedRoute>
+                }></Route>
+                <Route path="/admin/hotspots" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <MainLayout><DemandHotspots /></MainLayout>
                     </ProtectedRoute>
                 }></Route>
             </Routes>

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FaGlobeAmericas, FaComments, FaUserCheck, FaTags, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaGlobeAmericas, FaComments, FaUserCheck, FaTags, FaChevronLeft, FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
 
 interface AdminSidebarProps {
     isAdmin: boolean;
@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
     { path: '/admin/chat', label: 'Messages', icon: <FaComments />, emoji: '💬' },
     { path: '/admin/approvals', label: 'Driver Approvals', icon: <FaUserCheck />, emoji: '👤' },
     { path: '/promotions', label: 'Promotions', icon: <FaTags />, emoji: '🏷️' },
+    { path: '/admin/hotspots', label: 'Demand Hotspots', icon: <FaMapMarkerAlt />, emoji: '🔥' },
 ];
 
 export function AdminSidebar({ isAdmin }: AdminSidebarProps) {
@@ -75,8 +76,8 @@ export function AdminSidebar({ isAdmin }: AdminSidebarProps) {
                             key={item.path}
                             to={item.path}
                             className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group ${isActive
-                                    ? 'bg-primary/20 text-primary border-l-4 border-primary'
-                                    : 'text-text-muted hover:bg-bg-dark hover:text-text-light'
+                                ? 'bg-primary/20 text-primary border-l-4 border-primary'
+                                : 'text-text-muted hover:bg-bg-dark hover:text-text-light'
                                 } ${isCollapsed ? 'justify-center' : ''}`}
                             title={isCollapsed ? item.label : undefined}
                         >

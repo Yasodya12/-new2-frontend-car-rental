@@ -255,6 +255,38 @@ export function Trip() {
         }
     }, [trips]);
 
+    // NEW: Demand Logging Logic for Customers
+    useEffect(() => {
+        const logMissingDemand = async () => {
+            if (user?.role === 'customer' && startCoords && startAddress) {
+                const noDrivers = drivers.length === 0;
+                const noVehicles = vehicles.length === 0;
+
+                if (noDrivers || noVehicles) {
+                    try {
+                        let reason = 'both';
+                        if (noDrivers && !noVehicles) reason = 'no_drivers';
+                        if (!noDrivers && noVehicles) reason = 'no_vehicles';
+
+                        await backendApi.post("/api/v1/demand", {
+                            address: startAddress,
+                            lat: startCoords.lat,
+                            lng: startCoords.lng,
+                            reason
+                        });
+                        console.log("Dead zone demand logged:", startAddress);
+                    } catch (error) {
+                        console.error("Error logging demand signal:", error);
+                    }
+                }
+            }
+        };
+
+        // Debounce logging to avoid noise while user is picking location
+        const timeoutId = setTimeout(logMissingDemand, 2000);
+        return () => clearTimeout(timeoutId);
+    }, [startCoords, drivers.length, vehicles.length, user?.role, startAddress]);
+
 
 
     // Customer trips
@@ -1942,65 +1974,73 @@ export function Trip() {
             </div>
 
             {/* MODAL LAYER ZONE */}
-            {ratingModal?.show && (
-                <RatingModal
-                    tripId={ratingModal.tripId}
-                    driverId={ratingModal.driverId}
-                    driverName={ratingModal.driverName}
-                    onClose={() => setRatingModal(null)}
-                    onRatingSubmitted={() => {
-                        checkRatedTrips();
-                        dispatch(getAllTrips());
-                    }}
-                />
-            )}
+            {
+                ratingModal && ratingModal.show && (
+                    <RatingModal
+                        tripId={ratingModal.tripId}
+                        driverId={ratingModal.driverId}
+                        driverName={ratingModal.driverName}
+                        onClose={() => setRatingModal(null)}
+                        onRatingSubmitted={() => {
+                            checkRatedTrips();
+                            dispatch(getAllTrips());
+                        }}
+                    />
+                )
+            }
 
-            {showDetailsModal && selectedTripDetails && (
-                <TripDetailsModal
-                    trip={selectedTripDetails}
-                    onClose={() => {
-                        setShowDetailsModal(false);
-                        setSelectedTripDetails(null);
-                    }}
-                />
-            )}
+            {
+                showDetailsModal && selectedTripDetails && (
+                    <TripDetailsModal
+                        trip={selectedTripDetails}
+                        onClose={() => {
+                            setShowDetailsModal(false);
+                            setSelectedTripDetails(null);
+                        }}
+                    />
+                )
+            }
 
-            {invoiceTripId && (
-                <div className="fixed inset-0 bg-[#0B0F1A]/60 backdrop-blur-sm flex items-center justify-center p-4 z-[150] animate-in fade-in duration-500">
-                    <div className="bg-card-dark rounded-[3rem] p-1 shadow-[0_50px_100px_rgba(0,0,0,0.2)] w-full max-w-2xl relative border border-border-dark max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-accent z-30"></div>
-                        <button
-                            type="button"
-                            onClick={() => setInvoiceTripId(null)}
-                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-bg-dark flex items-center justify-center text-text-muted hover:text-text-light transition-colors z-30 font-black shadow-sm"
-                        >✕</button>
-                        <div className="p-6 md:p-10 lg:p-14">
-                            <Invoice
-                                tripId={invoiceTripId}
-                                currentUserRole={role}
-                                onPaymentComplete={() => {
-                                    dispatch(getAllTrips());
-                                    setInvoiceTripId(null);
-                                }}
-                            />
+            {
+                invoiceTripId && (
+                    <div className="fixed inset-0 bg-[#0B0F1A]/60 backdrop-blur-sm flex items-center justify-center p-4 z-[150] animate-in fade-in duration-500">
+                        <div className="bg-card-dark rounded-[3rem] p-1 shadow-[0_50px_100px_rgba(0,0,0,0.2)] w-full max-w-2xl relative border border-border-dark max-h-[90vh] overflow-y-auto">
+                            <div className="sticky top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-accent z-30"></div>
+                            <button
+                                type="button"
+                                onClick={() => setInvoiceTripId(null)}
+                                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-bg-dark flex items-center justify-center text-text-muted hover:text-text-light transition-colors z-30 font-black shadow-sm"
+                            >✕</button>
+                            <div className="p-6 md:p-10 lg:p-14">
+                                <Invoice
+                                    tripId={invoiceTripId}
+                                    currentUserRole={role || "customer"}
+                                    onPaymentComplete={() => {
+                                        dispatch(getAllTrips());
+                                        setInvoiceTripId(null);
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {showReassignModal && reassignTripId && reassignTripDetails && (
-                <TripReassignmentModal
-                    isOpen={showReassignModal}
-                    onClose={() => {
-                        setShowReassignModal(false);
-                        setReassignTripId(null);
-                        setReassignTripDetails(null);
-                        dispatch(getAllTrips());
-                    }}
-                    tripId={reassignTripId}
-                    tripDetails={reassignTripDetails}
-                />
-            )}
+            {
+                showReassignModal && reassignTripId && reassignTripDetails && (
+                    <TripReassignmentModal
+                        isOpen={showReassignModal}
+                        onClose={() => {
+                            setShowReassignModal(false);
+                            setReassignTripId(null);
+                            setReassignTripDetails(null);
+                            dispatch(getAllTrips());
+                        }}
+                        tripId={reassignTripId}
+                        tripDetails={reassignTripDetails as any}
+                    />
+                )
+            }
         </div>
     );
 }

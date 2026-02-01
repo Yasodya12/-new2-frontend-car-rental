@@ -25,6 +25,26 @@ const FleetIcon = L.icon({
     shadowSize: [41, 41]
 });
 
+// Red icon for Demand Hotspots
+const DemandIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Green icon for Processing trips
+const ProcessingIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
 interface LocationMarkerProps {
     setPosition: (pos: { lat: number; lng: number }) => void;
     setAddress: (address: string) => void;
@@ -38,6 +58,8 @@ interface FleetMarker {
     lng: number;
     label: string;
     details?: string;
+    type?: 'fleet' | 'demand';
+    status?: string;
 }
 
 interface LocationPickerProps {
@@ -151,19 +173,37 @@ const LocationPicker = ({ label, onLocationSelect, initialLocation, isReadOnly =
                     {position && !isReadOnly && <Marker position={position}></Marker>}
 
                     {/* Fleet Markers (Start Points or Current Points) */}
-                    {fleetMarkers.map((m, idx) => (
-                        <Marker key={`${idx}-${m.lat}-${m.lng}`} position={{ lat: m.lat, lng: m.lng }} icon={FleetIcon}>
-                            <Popup>
-                                <div className="p-1 min-w-[150px]">
-                                    <p className="font-bold text-blue-700 border-b border-blue-100 pb-1 mb-1">{m.label}</p>
-                                    {m.details && <p className="text-xs text-gray-600 mt-1 leading-relaxed">{m.details}</p>}
-                                    <div className="mt-2 text-[10px] text-gray-400">
-                                        Coords: {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
+                    {fleetMarkers.map((m, idx) => {
+                        let icon = FleetIcon;
+                        if (m.type === 'demand') {
+                            icon = DemandIcon;
+                        } else if (m.status === 'Processing') {
+                            icon = ProcessingIcon;
+                        }
+
+                        return (
+                            <Marker
+                                key={`${idx}-${m.lat}-${m.lng}`}
+                                position={{ lat: m.lat, lng: m.lng }}
+                                icon={icon}
+                            >
+                                <Popup>
+                                    <div className="p-1 min-w-[150px]">
+                                        <p className={`font-bold border-b pb-1 mb-1 ${m.type === 'demand' ? 'text-red-700 border-red-100' :
+                                                m.status === 'Processing' ? 'text-green-700 border-green-100' :
+                                                    'text-blue-700 border-blue-100'
+                                            }`}>
+                                            {m.label}
+                                        </p>
+                                        {m.details && <p className="text-xs text-gray-600 mt-1 leading-relaxed">{m.details}</p>}
+                                        <div className="mt-2 text-[10px] text-gray-400">
+                                            Coords: {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
+                                        </div>
                                     </div>
-                                </div>
-                            </Popup>
-                        </Marker>
-                    ))}
+                                </Popup>
+                            </Marker>
+                        );
+                    })}
 
                     {!isReadOnly && <LocationMarker setPosition={setPosition} setAddress={setAddress} onSelect={onLocationSelect} />}
 
