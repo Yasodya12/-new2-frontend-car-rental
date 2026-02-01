@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import type { RootState } from "../../../store/store.ts";
 import { setCredentials } from "../../../slices/authSlice.ts";
-import { FaCar, FaMapMarkerAlt, FaClock, FaStar, FaArrowRight, FaBookOpen, FaUsers, FaRoute, FaChartLine } from 'react-icons/fa';
+import { FaCar, FaMapMarkerAlt, FaClock, FaStar, FaArrowRight } from 'react-icons/fa';
 import { HiArrowRight } from 'react-icons/hi';
 import { CustomerDashboard } from "../DashBoard/CustomerDashboard.tsx";
 import { DriverDashboard } from "../DashBoard/DriverDashboard.tsx";
 
 export function Home() {
-    const user = useSelector((state: RootState) => state.auth.user);
+    const user = useSelector((state: RootState) => state.auth.user) as any;
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [mounted, setMounted] = useState(false);

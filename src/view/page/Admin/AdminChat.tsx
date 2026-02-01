@@ -41,7 +41,7 @@ const AdminChat: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const token = useSelector((state: RootState) => state.auth.token);
-    const currentUser = useSelector((state: RootState) => state.auth.user);
+    const currentUser = useSelector((state: RootState) => state.auth.user) as any;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

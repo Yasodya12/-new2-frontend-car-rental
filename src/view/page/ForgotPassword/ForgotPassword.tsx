@@ -204,7 +204,7 @@ export function ForgotPassword() {
                                         <rect x="115" y="55" width="4" height="14" fill="#FACC15" />
                                     </g>
                                     {/* Floating Numbers */}
-                                    {[1, 2, 3, 4, 5, 6].map((num, i) => (
+                                    {[1, 2, 3, 4, 5, 6].map((_, i) => (
                                         <circle key={i} cx={50 + i * 50} cy={250} r="8" fill="#4F9CF9" opacity="0.3" className="animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
                                     ))}
                                 </svg>
@@ -260,18 +260,17 @@ export function ForgotPassword() {
                                 const StepIcon = stepItem.icon;
                                 const isActive = step === stepItem.key;
                                 const isCompleted = currentStepIndex > index;
-                                
+
                                 return (
                                     <div key={stepItem.key} className="flex-1 flex flex-col items-center">
                                         <div className="relative w-full flex items-center">
                                             <div
-                                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                                    isCompleted
+                                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${isCompleted
                                                         ? 'bg-accent text-white scale-110'
                                                         : isActive
-                                                        ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/50'
-                                                        : 'bg-card-dark border-2 border-border-dark text-text-muted'
-                                                }`}
+                                                            ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/50'
+                                                            : 'bg-card-dark border-2 border-border-dark text-text-muted'
+                                                    }`}
                                             >
                                                 {isCompleted ? (
                                                     <HiCheckCircle className="text-xl" />
@@ -281,16 +280,14 @@ export function ForgotPassword() {
                                             </div>
                                             {index < steps.length - 1 && (
                                                 <div
-                                                    className={`absolute left-1/2 top-1/2 w-full h-0.5 -z-10 transition-all duration-500 ${
-                                                        isCompleted ? 'bg-accent' : 'bg-border-dark'
-                                                    }`}
+                                                    className={`absolute left-1/2 top-1/2 w-full h-0.5 -z-10 transition-all duration-500 ${isCompleted ? 'bg-accent' : 'bg-border-dark'
+                                                        }`}
                                                     style={{ width: 'calc(100% - 3rem)', left: 'calc(50% + 1.5rem)' }}
                                                 ></div>
                                             )}
                                         </div>
-                                        <span className={`text-xs mt-2 font-semibold transition-colors ${
-                                            isActive ? 'text-primary' : isCompleted ? 'text-accent' : 'text-text-muted'
-                                        }`}>
+                                        <span className={`text-xs mt-2 font-semibold transition-colors ${isActive ? 'text-primary' : isCompleted ? 'text-accent' : 'text-text-muted'
+                                            }`}>
                                             {stepItem.label}
                                         </span>
                                     </div>
@@ -303,13 +300,13 @@ export function ForgotPassword() {
                     <div className="bg-card-dark/80 backdrop-blur-xl rounded-[2rem] border border-border-dark p-10 shadow-2xl relative overflow-hidden group">
                         {/* Subtle inner highlight */}
                         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
-                        
+
                         {/* Decorative Background Pattern */}
                         <div className="absolute inset-0 opacity-5 pointer-events-none">
                             <svg className="w-full h-full" viewBox="0 0 400 400" preserveAspectRatio="none">
                                 <defs>
                                     <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#4F9CF9" strokeWidth="0.5"/>
+                                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#4F9CF9" strokeWidth="0.5" />
                                     </pattern>
                                 </defs>
                                 <rect width="100%" height="100%" fill="url(#grid)" />
@@ -334,7 +331,7 @@ export function ForgotPassword() {
                                         Enter your registered email address and we'll send you a verification code to reset your password.
                                     </p>
                                 </div>
-                                
+
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-text-muted ml-1 uppercase tracking-wider">Email Address</label>
                                     <div className="relative group">
@@ -486,11 +483,10 @@ export function ForgotPassword() {
                                         </button>
                                     </div>
                                     {newPassword && confirmPassword && (
-                                        <p className={`text-xs mt-1 ml-1 flex items-center gap-1 ${
-                                            newPassword === confirmPassword && newPassword.length >= 6
+                                        <p className={`text-xs mt-1 ml-1 flex items-center gap-1 ${newPassword === confirmPassword && newPassword.length >= 6
                                                 ? 'text-accent'
                                                 : 'text-danger'
-                                        }`}>
+                                            }`}>
                                             {newPassword === confirmPassword && newPassword.length >= 6 ? (
                                                 <>
                                                     <HiCheckCircle /> Passwords match
