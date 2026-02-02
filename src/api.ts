@@ -17,4 +17,23 @@ backendApi.interceptors.request.use(
     (error) => {
         return Promise.reject(error);
     }
-)
+);
+
+// add a response interceptor
+backendApi.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Clear all auth related data
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('role');
+            localStorage.removeItem('profileComplete');
+
+            // Redirect to login page
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);

@@ -20,7 +20,6 @@ function App() {
             // Only redirect if not already on public routes
             const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/complete-profile'];
             if (!publicRoutes.includes(window.location.pathname)) {
-                alert('You are not logged in. Please log in to continue.');
                 navigate('/login');
             }
         } else {
