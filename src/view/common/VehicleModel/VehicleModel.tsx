@@ -1,4 +1,6 @@
 // components/VehicleModal.tsx
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../store/store";
 import type { VehicleData } from "../../../Model/vehicleData";
 
 type Props = {
@@ -10,7 +12,7 @@ type Props = {
 
 export function VehicleModal({ vehicle, onClose, onUpdate, onDelete }: Props) {
     const imageUrl = vehicle.image ? `http://localhost:3000/uploads/vehicle/${vehicle.image}` : "";
-    const role = localStorage.getItem("role");
+    const { role } = useSelector((state: RootState) => state.auth);
 
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4 text-left">

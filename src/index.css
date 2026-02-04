@@ -13,8 +13,690 @@
   --color-border-dark: #E2E8F0;
 }
 
-@layer base {
-  body {
-    @apply bg-bg-dark text-text-light antialiased;
+/* ============================================
+   GLOBAL RESET & MODERN DEFAULTS
+   ============================================ */
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-bg-dark text-text-light antialiased;
+  overflow-x: hidden;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.theme-monochrome ::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.theme-monochrome ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Custom Selection */
+::selection {
+  background: rgba(37, 99, 235, 0.2);
+  color: #2563EB;
+}
+
+.theme-monochrome ::selection {
+  background: rgba(96, 165, 250, 0.2);
+  color: #60A5FA;
+}
+
+.theme-monochrome {
+  --color-bg-dark: #0F0F0F;
+  --color-card-dark: #1A1A1A;
+  --color-primary: #60A5FA;
+  --color-accent: #34D399;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-text-light: #F9FAFB;
+  --color-text-muted: #9CA3AF;
+  --color-border-dark: #2D2D2D;
+}
+
+/* ============================================
+   BACKGROUND COLORS
+   ============================================ */
+.theme-monochrome .bg-white,
+.theme-monochrome .bg-\[\#FFFFFF\] {
+  background-color: #1A1A1A !important;
+}
+
+.theme-monochrome .bg-gray-50,
+.theme-monochrome .bg-gray-100,
+.theme-monochrome .bg-slate-50,
+.theme-monochrome .bg-slate-100,
+.theme-monochrome .bg-\[\#F8FAFC\],
+.theme-monochrome .bg-\[\#FDFDFF\] {
+  background-color: #0F0F0F !important;
+}
+
+.theme-monochrome .bg-gray-200,
+.theme-monochrome .bg-slate-200,
+.theme-monochrome .bg-gray-300 {
+  background-color: #1A1A1A !important;
+}
+
+/* Specific main background override for Trip page */
+.theme-monochrome .bg-\[radial-gradient\(\#e5e7eb_1px\,transparent_1px\)\] {
+  background-image: radial-gradient(#2A2A2A 1px, transparent 1px) !important;
+}
+
+.theme-monochrome .bg-gray-900,
+.theme-monochrome .bg-slate-900 {
+  background-color: #F9FAFB !important;
+  color: #0F0F0F !important;
+}
+
+.theme-monochrome .bg-black {
+  background-color: #F9FAFB !important;
+  color: #0F0F0F !important;
+}
+
+.theme-monochrome .bg-\[\#0B0F1A\],
+.theme-monochrome .bg-\[\#0F172A\],
+.theme-monochrome .bg-\[\#1E293B\] {
+  background-color: #0A0A0A !important;
+}
+
+/* Blue backgrounds - keep blue accent visible */
+.theme-monochrome .bg-blue-50,
+.theme-monochrome .bg-blue-100 {
+  background-color: rgba(96, 165, 250, 0.1) !important;
+}
+
+.theme-monochrome .bg-blue-500,
+.theme-monochrome .bg-blue-600 {
+  background-color: #60A5FA !important;
+  color: #0F0F0F !important;
+}
+
+.theme-monochrome .bg-primary {
+  background-color: #60A5FA !important;
+}
+
+/* Green/Emerald backgrounds - keep green accent visible */
+.theme-monochrome .bg-emerald-50,
+.theme-monochrome .bg-green-50,
+.theme-monochrome .bg-emerald-100,
+.theme-monochrome .bg-green-100 {
+  background-color: rgba(52, 211, 153, 0.1) !important;
+}
+
+.theme-monochrome .bg-emerald-500,
+.theme-monochrome .bg-green-500,
+.theme-monochrome .bg-emerald-600,
+.theme-monochrome .bg-green-600 {
+  background-color: #34D399 !important;
+  color: #0F0F0F !important;
+}
+
+/* Purple backgrounds - keep purple accent */
+.theme-monochrome .bg-purple-50,
+.theme-monochrome .bg-purple-100 {
+  background-color: rgba(167, 139, 250, 0.1) !important;
+}
+
+.theme-monochrome .bg-purple-500,
+.theme-monochrome .bg-purple-600 {
+  background-color: #A78BFA !important;
+  color: #0F0F0F !important;
+}
+
+/* Red/Amber backgrounds */
+.theme-monochrome .bg-red-50,
+.theme-monochrome .bg-amber-50,
+.theme-monochrome .bg-yellow-50,
+.theme-monochrome .bg-orange-50 {
+  background-color: #1A1A1A !important;
+}
+
+/* ============================================
+   TEXT COLORS
+   ============================================ */
+.theme-monochrome .text-gray-900,
+.theme-monochrome .text-slate-900 {
+  color: #F5F5F5 !important;
+}
+
+.theme-monochrome .text-gray-800,
+.theme-monochrome .text-slate-800 {
+  color: #E5E5E5 !important;
+}
+
+.theme-monochrome .text-gray-700,
+.theme-monochrome .text-gray-600,
+.theme-monochrome .text-slate-700,
+.theme-monochrome .text-slate-600 {
+  color: #D4D4D4 !important;
+}
+
+.theme-monochrome .text-gray-500,
+.theme-monochrome .text-gray-400,
+.theme-monochrome .text-slate-500,
+.theme-monochrome .text-slate-400 {
+  color: #9CA3AF !important;
+}
+
+.theme-monochrome .text-gray-300,
+.theme-monochrome .text-slate-300 {
+  color: #6B7280 !important;
+}
+
+.theme-monochrome .text-gray-200,
+.theme-monochrome .text-gray-100 {
+  color: #525252 !important;
+}
+
+.theme-monochrome .text-black {
+  color: #F5F5F5 !important;
+}
+
+.theme-monochrome .text-white {
+  color: #0A0A0A !important;
+}
+
+/* Blue text - keep blue visible */
+.theme-monochrome .text-blue-600,
+.theme-monochrome .text-blue-500,
+.theme-monochrome .text-blue-400 {
+  color: #60A5FA !important;
+}
+
+/* Green/Emerald text - keep green visible */
+.theme-monochrome .text-emerald-500,
+.theme-monochrome .text-emerald-600,
+.theme-monochrome .text-green-500,
+.theme-monochrome .text-green-600 {
+  color: #34D399 !important;
+}
+
+/* Purple text - keep purple visible */
+.theme-monochrome .text-purple-500,
+.theme-monochrome .text-purple-600 {
+  color: #A78BFA !important;
+}
+
+/* ============================================
+   BORDER COLORS
+   ============================================ */
+.theme-monochrome .border-gray-100,
+.theme-monochrome .border-gray-200,
+.theme-monochrome .border-gray-300,
+.theme-monochrome .border-slate-100,
+.theme-monochrome .border-slate-200 {
+  border-color: #2A2A2A !important;
+}
+
+.theme-monochrome .border-white {
+  border-color: #2A2A2A !important;
+}
+
+.theme-monochrome .border-blue-500,
+.theme-monochrome .border-blue-600 {
+  border-color: #60A5FA !important;
+}
+
+.theme-monochrome .border-primary {
+  border-color: #60A5FA !important;
+}
+
+/* ============================================
+   SHADOWS - subtle glow for dark mode
+   ============================================ */
+.theme-monochrome .shadow-xl,
+.theme-monochrome .shadow-2xl,
+.theme-monochrome .shadow-3xl,
+.theme-monochrome .shadow-lg,
+.theme-monochrome .shadow-md,
+.theme-monochrome .shadow-sm,
+.theme-monochrome .shadow {
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.5), 0 0 6px rgba(96, 165, 250, 0.05) !important;
+}
+
+.theme-monochrome .shadow-gray-200,
+.theme-monochrome .shadow-gray-100 {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============================================
+   BACKDROP & MODALS
+   ============================================ */
+.theme-monochrome .backdrop-blur-sm,
+.theme-monochrome .backdrop-blur,
+.theme-monochrome .backdrop-blur-md,
+.theme-monochrome .backdrop-blur-xl,
+.theme-monochrome .backdrop-blur-2xl,
+.theme-monochrome .backdrop-blur-3xl {
+  background-color: rgba(20, 20, 20, 0.85) !important;
+}
+
+/* Fix white/light overlays used in modals */
+.theme-monochrome .bg-white\/70,
+.theme-monochrome .bg-white\/50,
+.theme-monochrome .bg-white\/90,
+.theme-monochrome .bg-white\/80 {
+  background-color: rgba(20, 20, 20, 0.9) !important;
+}
+
+.theme-monochrome .bg-white\/10,
+.theme-monochrome .bg-white\/5,
+.theme-monochrome .bg-white\/15,
+.theme-monochrome .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ============================================
+   INPUT FIELDS
+   ============================================ */
+.theme-monochrome input,
+.theme-monochrome select,
+.theme-monochrome textarea {
+  background-color: #1A1A1A !important;
+  border-color: #2A2A2A !important;
+  color: #F5F5F5 !important;
+}
+
+.theme-monochrome input::placeholder,
+.theme-monochrome textarea::placeholder,
+.theme-monochrome select::placeholder {
+  color: #6B7280 !important;
+}
+
+.theme-monochrome input:focus,
+.theme-monochrome select:focus,
+.theme-monochrome textarea:focus {
+  border-color: #525252 !important;
+  outline-color: #525252 !important;
+  --tw-ring-color: rgba(82, 82, 82, 0.3) !important;
+}
+
+/* ============================================
+   HOVER STATES
+   ============================================ */
+.theme-monochrome .hover\:bg-white:hover {
+  background-color: #252525 !important;
+}
+
+.theme-monochrome .hover\:bg-gray-50:hover,
+.theme-monochrome .hover\:bg-gray-100:hover,
+.theme-monochrome .hover\:bg-slate-50:hover,
+.theme-monochrome .hover\:bg-slate-100:hover {
+  background-color: #252525 !important;
+}
+
+.theme-monochrome .hover\:bg-blue-50:hover {
+  background-color: #1F1F1F !important;
+}
+
+.theme-monochrome .hover\:bg-bg-dark:hover {
+  background-color: #1A1A1A !important;
+}
+
+.theme-monochrome .hover\:bg-black:hover {
+  background-color: #E5E5E5 !important;
+}
+
+.theme-monochrome .hover\:text-primary:hover {
+  color: #FFFFFF !important;
+}
+
+.theme-monochrome .hover\:text-gray-600:hover,
+.theme-monochrome .hover\:text-gray-900:hover {
+  color: #F5F5F5 !important;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+.theme-monochrome table {
+  border-color: #2A2A2A !important;
+}
+
+.theme-monochrome th,
+.theme-monochrome td {
+  border-color: #2A2A2A !important;
+}
+
+.theme-monochrome thead,
+.theme-monochrome thead tr {
+  background-color: #1A1A1A !important;
+}
+
+.theme-monochrome tbody tr {
+  background-color: #141414 !important;
+}
+
+.theme-monochrome tbody tr:hover {
+  background-color: #1F1F1F !important;
+}
+
+/* ============================================
+   GRADIENTS
+   ============================================ */
+.theme-monochrome .from-blue-400 {
+  --tw-gradient-from: #FFFFFF !important;
+}
+
+.theme-monochrome .to-emerald-400 {
+  --tw-gradient-to: #A0A0A0 !important;
+}
+
+.theme-monochrome .bg-gradient-to-br,
+.theme-monochrome .bg-gradient-to-r,
+.theme-monochrome .bg-gradient-to-t {
+  opacity: 0.9;
+}
+
+/* ============================================
+   SPECIFIC UI ELEMENTS
+   ============================================ */
+/* Trip Summary Card */
+.theme-monochrome .trip-summary-card {
+  background-image: linear-gradient(135deg, #111827 0%, #0F172A 100%) !important;
+  border: 1px solid #1E40AF !important;
+  box-shadow: 0 10px 40px -10px rgba(30, 64, 175, 0.3) !important;
+}
+
+/* Fix text colors inside the gradient card */
+.theme-monochrome .trip-summary-card .text-white,
+.theme-monochrome .trip-summary-card h3,
+.theme-monochrome .trip-summary-card p,
+.theme-monochrome .trip-summary-card span {
+  color: #FFFFFF !important;
+}
+
+.theme-monochrome .trip-summary-card .text-blue-200 {
+  color: #BFDBFE !important;
+  /* Ensure blue-200 stays light */
+}
+
+.theme-monochrome .trip-stat-card {
+  background-color: #1A1A1A !important;
+  /* Dark background */
+  border-color: #2D2D2D !important;
+}
+
+.theme-monochrome .trip-stat-card p {
+  color: #E5E7EB !important;
+  /* Light text */
+}
+
+.theme-monochrome .trip-stat-card p.text-blue-600 {
+  color: #60A5FA !important;
+  /* Light blue accent */
+}
+
+/* Customer Dashboard */
+.theme-monochrome .customer-dashboard-content-card,
+.theme-monochrome .dashboard-stat-card {
+  background-color: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+.theme-monochrome .dashboard-stat-card:hover {
+  border-color: #3B82F6 !important;
+  /* Blue hover for stats */
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15) !important;
+}
+
+.theme-monochrome .customer-dashboard-insight-card {
+  /* Keep blue bg but ensure it pops */
+  box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Login Page Improvements */
+.theme-monochrome .login-page-container {
+  background-color: #0F0F0F !important;
+}
+
+.theme-monochrome .login-card {
+  background-color: #1A1A1A !important;
+  border-color: #2D2D2D !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Vehicle Card Improvements */
+.theme-monochrome .vehicle-card-container {
+  background-color: #141414 !important;
+  border-color: #2A2A2A !important;
+}
+
+/* Force white text for category badges */
+.theme-monochrome .vehicle-category-badge {
+  color: #FFFFFF !important;
+}
+
+.theme-monochrome .vehicle-card-container:hover {
+  border-color: #A78BFA !important;
+  /* Purple hover */
+  box-shadow: 0 10px 25px -5px rgba(167, 139, 250, 0.15) !important;
+}
+
+.theme-monochrome .vehicle-image-area {
+  background-color: #0A0A0A !important;
+  /* Darker than card for contrast */
+}
+
+/* Cards */
+.theme-monochrome [class*="rounded-3xl"],
+.theme-monochrome [class*="rounded-2xl"],
+.theme-monochrome [class*="rounded-xl"] {
+  border-color: #2A2A2A;
+}
+
+/* Pagination */
+.theme-monochrome .bg-gray-50.text-gray-300 {
+  background-color: #1A1A1A !important;
+  color: #525252 !important;
+}
+
+/* Glass Navbar */
+.glass-nav {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-monochrome .glass-nav {
+  background-color: rgba(15, 15, 15, 0.7) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(10px);
   }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glass-panel {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.theme-monochrome .glass-panel {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.theme-monochrome a.bg-gray-900,
+.theme-monochrome .bg-gray-900 {
+  background-color: #FFFFFF !important;
+  color: #0A0A0A !important;
+}
+
+.theme-monochrome button.bg-gray-900:hover,
+.theme-monochrome a.bg-gray-900:hover {
+  background-color: #E5E5E5 !important;
+}
+
+/* Dividers */
+.theme-monochrome hr,
+.theme-monochrome .divide-gray-100>*+*,
+.theme-monochrome .divide-gray-200>*+* {
+  border-color: #2A2A2A !important;
+}
+
+/* Fix ring colors */
+.theme-monochrome .ring-white {
+  --tw-ring-color: #2A2A2A !important;
+}
+
+.theme-monochrome .ring-blue-100,
+.theme-monochrome .ring-blue-50 {
+  --tw-ring-color: rgba(82, 82, 82, 0.3) !important;
+}
+
+/* Leaflet map container fix */
+.theme-monochrome .leaflet-container {
+  background-color: #1A1A1A !important;
+}
+
+/* ============================================
+   SMOOTH TRANSITIONS
+   ============================================ */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
+}
+
+/* ============================================
+   2026 UI POLISH – TYPOGRAPHY & ELEVATION
+   ============================================ */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Inter", "Segoe UI", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Motion-safe / reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  html *,
+  .animate-fade-in,
+  .animate-float {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Card & key surface interactions */
+.dashboard-stat-card,
+.vehicle-card-container,
+.customer-dashboard-content-card,
+.customer-dashboard-insight-card,
+.trip-summary-card,
+.login-card {
+  transform-origin: center;
+  will-change: transform, box-shadow;
+}
+
+.dashboard-stat-card:hover,
+.vehicle-card-container:hover,
+.customer-dashboard-content-card:hover,
+.customer-dashboard-insight-card:hover,
+.trip-summary-card:hover,
+.login-card:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+.theme-monochrome .dashboard-stat-card,
+.theme-monochrome .vehicle-card-container,
+.theme-monochrome .customer-dashboard-content-card,
+.theme-monochrome .customer-dashboard-insight-card,
+.theme-monochrome .trip-summary-card,
+.theme-monochrome .login-card {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Enhanced glass navigation */
+.glass-nav {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.theme-monochrome .glass-nav {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Modern glass panels */
+.glass-panel {
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
+}
+
+.theme-monochrome .glass-panel {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+}
+
+/* Login page gradient backgrounds */
+.login-page-container {
+  background: radial-gradient(circle at top left, #e0f2fe 0, #f8fafc 30%, #f9fafb 55%, #eef2ff 100%);
+}
+
+.theme-monochrome .login-page-container {
+  background: radial-gradient(circle at top left, #111827 0, #020617 55%, #000000 100%) !important;
 }

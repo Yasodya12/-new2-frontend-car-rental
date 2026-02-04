@@ -124,7 +124,7 @@ export function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-stretch bg-[#FDFDFF] overflow-hidden text-left font-sans">
+        <div className="login-page-container min-h-screen flex items-stretch bg-[#FDFDFF] overflow-hidden text-left font-sans">
             {/* Left Side: High-Fidelity Logistics Intelligence Hero */}
             <div className={`hidden lg:flex lg:w-[55%] relative items-center justify-center p-12 overflow-hidden transition-all duration-1000 bg-[#0B0F1A] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
                 {/* Deep Background Layers */}
@@ -225,7 +225,7 @@ export function Login() {
             </div>
 
             {/* Right Side: High-End Auth Section */}
-            <div className={`w-full lg:w-[45%] flex flex-col items-center justify-center px-8 lg:px-24 relative transition-all duration-1000 delay-300 ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+            <div className={`w-full lg:w-[45%] flex flex-col items-center justify-center px-8 lg:px-24 relative transition-all duration-1000 delay-300 animate-fade-in ${mounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
                 <div className="w-full max-w-md">
                     {/* Header */}
                     <div className="mb-12 text-center lg:text-left">
@@ -234,7 +234,7 @@ export function Login() {
                     </div>
 
                     {/* Login Card (Light Glass) */}
-                    <div className="bg-white rounded-[2.5rem] p-2 shadow-[0_30px_60px_rgba(0,0,0,0.04)] border border-gray-100">
+                    <div className="login-card bg-white/70 backdrop-blur-2xl rounded-[2.5rem] p-2 shadow-[0_30px_60px_rgba(0,0,0,0.04)] border border-white/40 hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-shadow duration-500">
                         <div className="p-10 lg:p-12">
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 {/* Email Field */}

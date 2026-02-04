@@ -24,7 +24,7 @@ export function MainContent() {
                 <Route path="/" element={<MainLayout><Home /></MainLayout>}></Route>
                 <Route path="/trips/*" element={<MainLayout><Trip /></MainLayout>}></Route>
                 <Route path="/vehicles" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={['admin', 'customer', 'driver']}>
                         <MainLayout><Vehicle /></MainLayout>
                     </ProtectedRoute>
                 }></Route>

@@ -16,7 +16,8 @@ export function Driver() {
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const isAdmin = localStorage.getItem('role') === 'admin';
+    const { role } = useSelector((state: RootState) => state.auth);
+    const isAdmin = role === 'admin';
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -113,7 +114,6 @@ export function Driver() {
                 {
                     driverState.list
                         .filter(driver => {
-                            const role = localStorage.getItem('role');
                             if (role === 'admin') return true;
                             return driver.isApproved;
                         })

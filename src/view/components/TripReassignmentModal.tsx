@@ -17,6 +17,7 @@ interface TripReassignmentModalProps {
         startLat?: number;
         startLng?: number;
     };
+    onRefresh?: () => void;
 }
 
 interface Driver {
@@ -31,7 +32,7 @@ interface Driver {
     };
 }
 
-export function TripReassignmentModal({ isOpen, onClose, tripId, tripDetails }: TripReassignmentModalProps) {
+export function TripReassignmentModal({ isOpen, onClose, tripId, tripDetails, onRefresh }: TripReassignmentModalProps) {
     const dispatch = useDispatch<AppDispatch>();
     const [availableDrivers, setAvailableDrivers] = useState<Driver[]>([]);
     const [loading, setLoading] = useState(false);
@@ -73,6 +74,7 @@ export function TripReassignmentModal({ isOpen, onClose, tripId, tripDetails }: 
         try {
             await dispatch(reassignTrip({ tripId, newDriverId: selectedDriverId })).unwrap();
             alert("Trip reassigned successfully!");
+            if (onRefresh) onRefresh();
             onClose();
         } catch (error: any) {
             alert(error || "Failed to reassign trip");
@@ -82,7 +84,8 @@ export function TripReassignmentModal({ isOpen, onClose, tripId, tripDetails }: 
     const handleCancel = async () => {
         try {
             await backendApi.put(`/api/v1/trips/status/${tripId}`, { status: "Cancelled" });
-            alert("Trip cancelled");
+            alert("Trip cancelled successfully!");
+            if (onRefresh) onRefresh();
             onClose();
         } catch (error) {
             alert("Failed to cancel trip");

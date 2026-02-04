@@ -31,7 +31,7 @@ export function Vehicle() {
     // Location state for garage location
     const [garageLocation, setGarageLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
-    const role = localStorage.getItem('role');
+    const { role } = useSelector((state: RootState) => state.auth);
 
     const dispatch = useDispatch<AppDispatch>();
     const vehicleState = useSelector((state: RootState) => state.vehicle);

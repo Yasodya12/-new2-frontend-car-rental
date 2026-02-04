@@ -46,7 +46,7 @@ export function DashboardCard({ label, value, icon, trend, color = 'primary', pr
     const isLarge = size === 'large';
 
     return (
-        <div className={`bg-white rounded-2xl border border-gray-100 p-6 shadow-sm transition-all duration-300 group relative overflow-hidden transform hover:translate-y-[-4px] hover:shadow-md hover:border-blue-200`}>
+        <div className={`dashboard-stat-card bg-white rounded-2xl border border-gray-100 p-6 shadow-sm transition-all duration-300 group relative overflow-hidden transform hover:translate-y-[-4px] hover:shadow-md hover:border-blue-200`}>
             {/* Very Subtle Ambient Glow */}
             <div className={`absolute -top-12 -right-12 w-32 h-32 ${config.bg} rounded-full blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity duration-500`}></div>
 

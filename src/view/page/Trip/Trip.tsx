@@ -98,6 +98,7 @@ export function Trip() {
     const dispatch = useDispatch<AppDispatch>();
     const [isUpdating, setIsUpdating] = useState(false);
     const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const accessToken = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -340,7 +341,7 @@ export function Trip() {
             dispatch(getAllVehicles());
             dispatch(getAllTrips());
         }
-    }, [dispatch, accessToken]);
+    }, [dispatch, accessToken, refreshKey]);
 
     // Check which trips have been rated
     const checkRatedTrips = async () => {
@@ -710,19 +711,18 @@ export function Trip() {
         try {
             await backendApi.put(`/api/v1/trips/status/${tripId}`, { status: newStatus });
 
-            // Update the trip status in local state without removing completed trips
-            setLocalTrips(prev =>
-                prev.map(trip =>
-                    trip._id === tripId
-                        ? { ...trip, status: newStatus }
-                        : trip
-                )
-            );
+            alert(`Trip ${newStatus.toLowerCase()} successfully!`);
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+
         } catch (err) {
-            console.log(err)
+            console.log(err);
             alert(`Failed to update trip to ${newStatus}`);
         }
     };
+
 
     const handleRemovePromo = () => {
         if (appliedPromo) {
@@ -790,12 +790,13 @@ export function Trip() {
             if (isUpdating && selectedTripId) {
                 await backendApi.put(`/api/v1/trips/update/${selectedTripId}`, submitData);
                 alert("Trip updated successfully");
-                window.location.reload();
+                setRefreshKey(prev => prev + 1);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { status, ...newTripData } = submitData;
                 const res = await backendApi.post("/api/v1/trips/save", newTripData);
                 alert("Trip added successfully");
+                setRefreshKey(prev => prev + 1);
 
                 try {
                     await backendApi.post("/api/v1/email/send-trip-assignment", {
@@ -1102,11 +1103,11 @@ export function Trip() {
 
                     {/* Trip Info Grid */}
                     <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-gray-100">
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-colors group-hover:bg-blue-50 group-hover:border-blue-100">
+                        <div className="trip-stat-card bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-colors group-hover:bg-blue-50 group-hover:border-blue-100">
                             <p className="text-xs font-medium text-gray-500 mb-1">Total Fee</p>
                             <p className="text-lg font-bold text-blue-600">Rs. {trip.price?.toLocaleString()}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-colors group-hover:bg-blue-50 group-hover:border-blue-100">
+                        <div className="trip-stat-card bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-colors group-hover:bg-blue-50 group-hover:border-blue-100">
                             <p className="text-xs font-medium text-gray-500 mb-1">Distance</p>
                             <p className="text-lg font-bold text-gray-900">{trip.distance} <span className="text-sm text-gray-500">km</span></p>
                         </div>
@@ -1135,7 +1136,8 @@ export function Trip() {
                         <button
                             type="button"
                             onClick={(e) => {
-                                e.stopPropagation();
+                                e.preventDefault();   // 👈 ADD THIS
+                                e.stopPropagation(); // 👈 KEEP THIS
                                 handleStatusUpdateUI(trip._id!, 'Accepted');
                             }}
                             className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
@@ -1148,7 +1150,8 @@ export function Trip() {
                         <button
                             type="button"
                             onClick={(e) => {
-                                e.stopPropagation();
+                                e.preventDefault();   // 👈 ADD THIS
+                                e.stopPropagation(); // 👈 KEEP THIS
                                 handleStatusUpdateUI(trip._id!, 'Processing');
                             }}
                             className="mt-6 w-full bg-amber-500 hover:bg-amber-600 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
@@ -1161,7 +1164,8 @@ export function Trip() {
                         <button
                             type="button"
                             onClick={(e) => {
-                                e.stopPropagation();
+                                e.preventDefault();   // 👈 ADD THIS
+                                e.stopPropagation(); // 👈 KEEP THIS
                                 handleStatusUpdateUI(trip._id!, 'Completed');
                             }}
                             className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
@@ -1181,7 +1185,7 @@ export function Trip() {
             <div className="max-w-7xl mx-auto space-y-12">
                 {/* 1. MISSION DISPATCH CONSOLE (Customer & Admin) */}
                 {(user?.role?.toLowerCase() !== "driver") && (
-                    <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-1 shadow-[0_40px_90px_rgba(0,0,0,0.06)] border border-white/20 relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <div className="glass-panel rounded-[3rem] p-1 shadow-[0_40px_90px_rgba(0,0,0,0.06)] relative overflow-hidden animate-fade-in">
                         {/* Internal Ambient Glow */}
                         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3"></div>
 
@@ -1221,7 +1225,7 @@ export function Trip() {
                                     <div className="space-y-8">
                                         {/* 1. Pickup & Drop-off Locations */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 shadow-sm space-y-4 hover:shadow-md transition-all hover:-translate-y-1 duration-300">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold shadow-md">
                                                         1
@@ -1237,7 +1241,7 @@ export function Trip() {
                                                 />
                                             </div>
 
-                                            <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                                            <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/50 shadow-sm space-y-4 hover:shadow-md transition-all hover:-translate-y-1 duration-300">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-md">
                                                         2
@@ -1386,13 +1390,13 @@ export function Trip() {
                                                         <div
                                                             key={v._id}
                                                             onClick={() => setTripData(prev => ({ ...prev, vehicleId: v._id! }))}
-                                                            className={`bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${tripData.vehicleId === v._id
+                                                            className={`vehicle-card-container bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${tripData.vehicleId === v._id
                                                                 ? 'border-purple-600 shadow-xl ring-2 ring-purple-100'
                                                                 : 'border-gray-200 hover:border-purple-300 hover:shadow-lg'
                                                                 }`}
                                                         >
                                                             {/* Vehicle Image */}
-                                                            <div className="relative h-36 overflow-hidden bg-gray-100">
+                                                            <div className="vehicle-image-area relative h-36 overflow-hidden bg-gray-100">
                                                                 {v.image ? (
                                                                     <img
                                                                         src={v.image}
@@ -1406,7 +1410,7 @@ export function Trip() {
                                                                 )}
                                                                 {/* Category Badge */}
                                                                 <div className="absolute top-3 right-3">
-                                                                    <span className={`px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border ${v.category === 'Luxury' ? 'bg-amber-500/90 text-white border-amber-400' :
+                                                                    <span className={`vehicle-category-badge px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border ${v.category === 'Luxury' ? 'bg-amber-500/90 text-white border-amber-400' :
                                                                         v.category === 'Premium' ? 'bg-purple-500/90 text-white border-purple-400' :
                                                                             v.category === 'Economy' ? 'bg-green-500/90 text-white border-green-400' :
                                                                                 'bg-blue-500/90 text-white border-blue-400'
@@ -1517,7 +1521,7 @@ export function Trip() {
                                         )}
 
                                         {/* Trip Summary Card */}
-                                        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+                                        <div className="trip-summary-card bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
                                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                                             <div className="relative z-10 space-y-6">
@@ -1617,7 +1621,7 @@ export function Trip() {
                                                 onClick={() => {
                                                     setIsUpdating(false);
                                                     setSelectedTripId(null);
-                                                    window.location.reload();
+                                                    setRefreshKey(prev => prev + 1);
                                                 }}
                                                 className="flex-1 sm:flex-none px-8 py-4 rounded-2xl font-semibold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
                                             >
@@ -1770,7 +1774,7 @@ export function Trip() {
                                             }`}
                                     >
                                         <div className={`w-2 h-2 rounded-full ${driverViewMode === 'radar' ? 'bg-purple-600 animate-pulse' : 'bg-transparent'}`}></div>
-                                        Trip Radar
+                                        UnAssign Driver Trips
                                         {(() => {
                                             const count = driverTrips.filter(t => t.isBroadcast && t.status === "Pending").length;
                                             return count > 0 && (
@@ -1798,7 +1802,7 @@ export function Trip() {
                                         }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${user?.isAvailable !== false ? 'bg-white animate-ping' : 'bg-gray-400'}`}></div>
-                                    {user?.isAvailable !== false ? 'Operations Active' : 'System Offline'}
+                                    {user?.isAvailable !== false ? 'Online' : 'Offline'}
                                 </button>
                             </div>
                         </div>
@@ -1824,9 +1828,9 @@ export function Trip() {
                                             <div className="px-3 py-1 bg-purple-100 text-purple-600 rounded-lg text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-ping"></div> Live Broadcast
                                             </div>
-                                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Active Marketplace</h3>
+                                            <h3 className="text-2xl font-black text-gray-900 tracking-tight">Active Open trips</h3>
                                         </div>
-                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{marketplaceTrips.length} Signals Detected</span>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{marketplaceTrips.length} Trips Detected</span>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                         {marketplaceTrips.map(trip => renderTripCard(trip, true))}
@@ -1840,8 +1844,8 @@ export function Trip() {
                             <section className="space-y-10 animate-in fade-in slide-in-from-top-4 duration-700">
                                 <div className="flex flex-col md:flex-row justify-between items-end gap-10 px-6">
                                     <div>
-                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Assigned Operational Ledger</h3>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Historical & active logistics tracking</p>
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Trips Assign To You</h3>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Historical & active Trips tracking</p>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
                                         {(['All', 'Pending', 'Accepted', 'Processing', 'Completed', 'Paid', 'Cancelled'] as const).map(s => (
@@ -2038,6 +2042,7 @@ export function Trip() {
                         }}
                         tripId={reassignTripId}
                         tripDetails={reassignTripDetails as any}
+                        onRefresh={() => setRefreshKey(prev => prev + 1)}
                     />
                 )
             }
