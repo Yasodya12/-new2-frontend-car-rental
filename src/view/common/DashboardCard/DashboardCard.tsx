@@ -46,7 +46,7 @@ export function DashboardCard({ label, value, icon, trend, color = 'primary', pr
     const isLarge = size === 'large';
 
     return (
-        <div className={`dashboard-stat-card bg-white rounded-2xl border border-gray-100 p-6 shadow-sm transition-all duration-300 group relative overflow-hidden transform hover:translate-y-[-4px] hover:shadow-md hover:border-blue-200`}>
+        <div className={`dashboard-stat-card bg-card-dark rounded-2xl border border-border-dark p-6 shadow-sm transition-all duration-300 group relative overflow-hidden transform hover:translate-y-[-4px] hover:shadow-md hover:border-primary/30`}>
             {/* Very Subtle Ambient Glow */}
             <div className={`absolute -top-12 -right-12 w-32 h-32 ${config.bg} rounded-full blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity duration-500`}></div>
 
@@ -64,9 +64,9 @@ export function DashboardCard({ label, value, icon, trend, color = 'primary', pr
                 </div>
 
                 <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 group-hover:text-gray-500 transition-colors uppercase">{label}</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 group-hover:text-text-light transition-colors uppercase">{label}</p>
                     <div className="flex items-baseline gap-2">
-                        <p className={`${isLarge ? 'text-4xl' : 'text-3xl'} font-bold text-gray-900 tracking-tight`}>
+                        <p className={`${isLarge ? 'text-4xl' : 'text-3xl'} font-bold text-text-light tracking-tight`}>
                             {value}
                         </p>
                     </div>
@@ -74,12 +74,12 @@ export function DashboardCard({ label, value, icon, trend, color = 'primary', pr
 
                 {/* Refined Progress bar */}
                 {progress !== undefined && (
-                    <div className="mt-8 pt-4 border-t border-gray-50">
+                    <div className="mt-8 pt-4 border-t border-border-dark/50">
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">Efficiency</span>
+                            <span className="text-[9px] font-semibold text-text-muted uppercase tracking-wider">Efficiency</span>
                             <span className={`text-[9px] font-bold ${config.text}`}>{progress.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 bg-gray-50 rounded-full overflow-hidden border border-gray-100">
+                        <div className="h-1.5 bg-bg-dark rounded-full overflow-hidden border border-border-dark/50">
                             <div
                                 className={`h-full bg-blue-600 rounded-full transition-all duration-1000 ease-in-out relative`}
                                 style={{ width: `${Math.min(progress, 100)}%` }}

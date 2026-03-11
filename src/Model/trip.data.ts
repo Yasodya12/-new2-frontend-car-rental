@@ -18,7 +18,11 @@ export interface TripData {
     endLng?: number;
     promoCode?: string;
     discountAmount?: number;
+    driverFee: number;
     isBroadcast?: boolean;
+    rejectedDrivers?: string[];
+    rejectionReason?: string;
+    rating?: number;
 }
 
 export interface PopulatedTripDTO {
@@ -58,5 +62,9 @@ export interface PopulatedTripDTO {
     currentProgress?: number;
     promoCode?: string;
     discountAmount?: number;
+    driverFee?: number;
     isBroadcast?: boolean;
+    rejectedDrivers?: string[];
+    rejectionReason?: string;
+    rating?: number;
 }

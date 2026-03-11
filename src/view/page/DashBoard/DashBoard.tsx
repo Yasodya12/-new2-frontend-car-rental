@@ -11,6 +11,7 @@ import type { PopulatedTripDTO } from "../../../Model/trip.data.ts";
 import type { UserData } from "../../../Model/userData.ts";
 import { CustomerDashboard } from "./CustomerDashboard.tsx";
 import { DriverDashboard } from "./DriverDashboard.tsx";
+import { FaStickyNote, FaRoute } from "react-icons/fa";
 
 export function Dashboard() {
     const auth = useSelector((state: RootState) => state.auth);
@@ -258,6 +259,7 @@ export function Dashboard() {
                                                         <th className="px-4 py-3 text-left">Date</th>
                                                         <th className="px-4 py-3 text-left">Route</th>
                                                         <th className="px-4 py-3 text-left">Status</th>
+                                                        <th className="px-4 py-3 text-left">Meta</th>
                                                         <th className="px-4 py-3 text-left">Price</th>
                                                         <th className="px-4 py-3 text-left">Type</th>
                                                     </tr>
@@ -279,10 +281,25 @@ export function Dashboard() {
                                                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${trip.status === 'Completed' || trip.status === 'Paid' ? 'bg-green-500/20 text-green-400' :
                                                                     trip.status === 'Processing' ? 'bg-yellow-500/20 text-yellow-400' :
                                                                         trip.status === 'Cancelled' ? 'bg-red-500/20 text-red-400' :
-                                                                            'bg-gray-500/20 text-gray-400'
+                                                                            trip.status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
+                                                                                'bg-gray-500/20 text-gray-400'
                                                                     }`}>
                                                                     {trip.status}
                                                                 </span>
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    {trip.rating && (
+                                                                        <div className="flex items-center gap-1 bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                                                            <span>★</span> {(trip.rating || 0).toFixed(1)}
+                                                                        </div>
+                                                                    )}
+                                                                    {trip.status === 'Rejected' && trip.rejectionReason && (
+                                                                        <div className="text-red-400 cursor-help" title={`Rejection Reason: ${trip.rejectionReason}`}>
+                                                                            <FaStickyNote size={12} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </td>
                                                             <td className="px-4 py-3 font-medium text-primary">
                                                                 Rs. {trip.price?.toLocaleString() || '0'}
@@ -471,6 +488,7 @@ export function Dashboard() {
                 <DashboardCard label="Customers" value={dashboard.data?.totalCustomers || 0} />
                 <DashboardCard label="Vehicles" value={dashboard.data?.totalVehicles || 0} />
                 <DashboardCard label="Revenue" value={`Rs. ${dashboard.data?.totalRevenue || 0}`} />
+                <DashboardCard label="Driver Payouts" value={`Rs. ${dashboard.data?.totalDriverPayout || 0}`} />
                 <DashboardCard label="Promo Savings" value={`Rs. ${dashboard.data?.totalPromoDiscount || 0}`} />
             </div>
 
@@ -498,7 +516,7 @@ export function Dashboard() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-lg font-bold text-yellow-500">⭐ {driver.averageRating.toFixed(1)}</span>
+                                            <span className="text-lg font-bold text-yellow-500">⭐ {(driver.averageRating || 0).toFixed(1)}</span>
                                         </div>
                                     </div>
                                 ))}

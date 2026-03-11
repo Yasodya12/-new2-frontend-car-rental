@@ -7,6 +7,7 @@ import { getAllUsers } from "../../../../slices/UserSlices.ts";
 import type { UserData } from "../../../../Model/userData.ts";
 import type { PopulatedTripDTO } from "../../../../Model/trip.data.ts";
 import type { DriverDocumentData } from "../../../../Model/DriverDocumentData.ts";
+import { FaStickyNote } from "react-icons/fa";
 
 interface UserDetailsModalProps {
     user: UserData;
@@ -20,6 +21,8 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
     const { role: loggedInRole } = useSelector((state: RootState) => state.auth);
     const [docAdminNotes, setDocAdminNotes] = useState<{ [key: string]: string }>({});
     const [verifyingId, setVerifyingId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const tripsPerPage = 5;
 
     useEffect(() => {
         if (user.role === 'driver' && user._id) {
@@ -228,8 +231,8 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                             }}
                                                             disabled={!!verifyingId || doc.status === 'Rejected'}
                                                             className={`flex-1 text-white text-xs py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 ${doc.status === 'Rejected'
-                                                                    ? 'bg-gray-300 cursor-default'
-                                                                    : 'bg-green-600 hover:bg-green-700'
+                                                                ? 'bg-gray-300 cursor-default'
+                                                                : 'bg-green-600 hover:bg-green-700'
                                                                 }`}
                                                         >
                                                             Approve {doc.type}
@@ -250,8 +253,8 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                                                             }}
                                                             disabled={!!verifyingId || doc.status === 'Rejected'}
                                                             className={`flex-1 text-white text-xs py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95 ${doc.status === 'Rejected'
-                                                                    ? 'bg-gray-300 cursor-default'
-                                                                    : 'bg-red-600 hover:bg-red-700'
+                                                                ? 'bg-gray-300 cursor-default'
+                                                                : 'bg-red-600 hover:bg-red-700'
                                                                 }`}
                                                         >
                                                             Reject
@@ -280,15 +283,105 @@ export function UserDetailsModal({ user, trips, onClose }: UserDetailsModalProps
                     )}
 
                     {/* Associated Trips Section */}
-                    <div className="pt-6 border-t border-gray-200">
-                        <h3 className="text-xl font-bold text-gray-800 mb-4">Trip Activity</h3>
-                        <div className="bg-gray-50 rounded-2xl p-6 text-center text-gray-500 text-sm border border-gray-100">
-                            {trips.length > 0 ? (
-                                <p className="font-bold text-gray-600 text-lg">{trips.length} <span className="text-gray-400 text-sm font-medium">associated trips found.</span></p>
-                            ) : (
-                                <p className="italic">No trip history recorded for this user yet.</p>
+                    <div className="pt-6 border-t border-gray-200 font-outfit">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <span>🚖</span> Trip Activity
+                            </h3>
+                            {trips.length > 0 && (
+                                <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                    <span>{Math.min(trips.length, (currentPage - 1) * tripsPerPage + 1)}-{Math.min(trips.length, currentPage * tripsPerPage)}</span>
+                                    <span>/</span>
+                                    <span>{trips.length}</span>
+                                </div>
                             )}
                         </div>
+
+                        {trips.length > 0 ? (
+                            <div className="space-y-4">
+                                <div className="overflow-x-auto rounded-xl border border-gray-100">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 text-gray-400 uppercase text-[10px] font-black tracking-widest">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left">Date</th>
+                                                <th className="px-4 py-3 text-left">Route</th>
+                                                <th className="px-4 py-3 text-left">Status</th>
+                                                <th className="px-4 py-3 text-left">Meta</th>
+                                                <th className="px-4 py-3 text-left">Price</th>
+                                                <th className="px-4 py-3 text-left">Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {trips.slice((currentPage - 1) * tripsPerPage, currentPage * tripsPerPage).map(trip => (
+                                                <tr key={trip._id} className="hover:bg-blue-50/30 transition-colors">
+                                                    <td className="px-4 py-4 text-gray-700 font-semibold">
+                                                        {trip.date ? new Date(trip.date).toLocaleDateString() : 'N/A'}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-emerald-600 truncate max-w-[150px] text-[10px] font-bold" title={trip.startLocation}>📍 {trip.startLocation}</span>
+                                                            <span className="text-red-500 truncate max-w-[150px] text-[10px] font-bold" title={trip.endLocation}>📍 {trip.endLocation}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${trip.status === 'Completed' || trip.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                                            trip.status === 'Processing' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                                                trip.status === 'Cancelled' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                                    trip.status === 'Rejected' ? 'bg-red-50 text-red-600 border border-red-100' :
+                                                                        'bg-gray-50 text-gray-400 border border-gray-100'
+                                                            }`}>
+                                                            {trip.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            {trip.rating && (
+                                                                <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded text-[10px] font-black border border-amber-100">
+                                                                    <span>★</span> {trip.rating.toFixed(1)}
+                                                                </div>
+                                                            )}
+                                                            {trip.status === 'Rejected' && trip.rejectionReason && (
+                                                                <div className="text-red-400 cursor-help" title={`Rejection Reason: ${trip.rejectionReason}`}>
+                                                                    <FaStickyNote size={12} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 font-bold text-gray-900">
+                                                        Rs. {trip.price?.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{trip.tripType}</span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {trips.length > tripsPerPage && (
+                                    <div className="flex justify-center gap-2 mt-4">
+                                        {Array.from({ length: Math.ceil(trips.length / tripsPerPage) }).map((_, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => setCurrentPage(i + 1)}
+                                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i + 1
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 rounded-2xl p-12 text-center border border-gray-100 border-dashed">
+                                <div className="text-4xl mb-4 opacity-20 text-gray-400">🚖</div>
+                                <p className="italic text-gray-400 font-medium">No trip history recorded for this user yet.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

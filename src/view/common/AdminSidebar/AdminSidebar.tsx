@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FaGlobeAmericas, FaComments, FaUserCheck, FaTags, FaChevronLeft, FaChevronRight, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaGlobeAmericas, FaComments, FaUserCheck, FaTags, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave } from 'react-icons/fa';
 
 interface AdminSidebarProps {
     isAdmin: boolean;
@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
     { path: '/admin/approvals', label: 'Driver Approvals', icon: <FaUserCheck />, emoji: '👤' },
     { path: '/promotions', label: 'Promotions', icon: <FaTags />, emoji: '🏷️' },
     { path: '/admin/hotspots', label: 'Demand Hotspots', icon: <FaMapMarkerAlt />, emoji: '🔥' },
+    { path: '/admin/withdrawals', label: 'Withdrawals', icon: <FaMoneyBillWave />, emoji: '💰' },
 ];
 
 export function AdminSidebar({ isAdmin }: AdminSidebarProps) {

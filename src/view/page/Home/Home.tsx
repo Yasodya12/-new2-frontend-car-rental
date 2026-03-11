@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import { getUserFromToken } from "../../../auth/auth.ts";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import type { RootState } from "../../../store/store.ts";
-import { setCredentials } from "../../../slices/authSlice.ts";
 import { FaCar, FaMapMarkerAlt, FaClock, FaStar, FaArrowRight } from 'react-icons/fa';
 import { HiArrowRight } from 'react-icons/hi';
-import { CustomerDashboard } from "../DashBoard/CustomerDashboard.tsx";
-import { DriverDashboard } from "../DashBoard/DriverDashboard.tsx";
 
 interface User {
     _id: string;
@@ -18,35 +14,11 @@ interface User {
 
 export function Home() {
     const user = useSelector((state: RootState) => state.auth.user) as User | null;
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-            const userData = getUserFromToken(accessToken);
-            dispatch(setCredentials({
-                user: userData,
-                role: userData.role,
-                token: accessToken
-            }));
-        }
-    }, [dispatch]);
-
-    // If user is logged in, show role-based dashboard
-    if (user) {
-        if (user.role === 'customer') {
-            return <CustomerDashboard />;
-        } else if (user.role === 'driver') {
-            return <DriverDashboard />;
-        } else if (user.role === 'admin') {
-            // Redirect admin to dashboard
-            navigate('/dashboard');
-            return null;
-        }
-    }
+    }, []);
 
     // Public landing page for non-logged-in users
     return (
@@ -84,20 +56,45 @@ export function Home() {
                                 Fast, reliable, and designed for you.
                             </p>
                             <div className="flex flex-wrap gap-4">
-                                <Link
-                                    to="/login"
-                                    className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center gap-2 group"
-                                >
-                                    Get Started
-                                    <HiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                                <Link
-                                    to="/register"
-                                    className="bg-card-dark border-2 border-primary text-primary font-bold px-8 py-4 rounded-xl hover:bg-primary/10 transition-all"
-                                >
-                                    Create Account
-                                </Link>
+                                {user ? (
+                                    <>
+                                        <Link
+                                            to="/dashboard"
+                                            className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center gap-2 group"
+                                        >
+                                            Go to Dashboard
+                                            <HiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                        </Link>
+                                        <Link
+                                            to="/trips"
+                                            className="bg-card-dark border-2 border-primary text-primary font-bold px-8 py-4 rounded-xl hover:bg-primary/10 transition-all"
+                                        >
+                                            Browse Trips
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link
+                                            to="/login"
+                                            className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center gap-2 group"
+                                        >
+                                            Get Started
+                                            <HiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                        </Link>
+                                        <Link
+                                            to="/register"
+                                            className="bg-card-dark border-2 border-primary text-primary font-bold px-8 py-4 rounded-xl hover:bg-primary/10 transition-all"
+                                        >
+                                            Create Account
+                                        </Link>
+                                    </>
+                                )}
                             </div>
+                            {user && (
+                                <p className="mt-6 text-sm text-text-muted">
+                                    Signed in as <span className="font-semibold text-text-light">{user.name}</span>
+                                </p>
+                            )}
                         </div>
 
                         {/* Right Illustration */}
@@ -166,34 +163,36 @@ export function Home() {
                 </div>
             </div>
 
-            {/* CTA Section */}
-            <div className={`relative z-10 py-16 px-4 lg:px-8 transition-all duration-1000 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="max-w-4xl mx-auto text-center">
-                    <div className="bg-card-dark/80 backdrop-blur-xl rounded-3xl border border-border-dark p-12">
-                        <h3 className="text-3xl font-bold text-text-light mb-4">
-                            Ready to Start Your Journey?
-                        </h3>
-                        <p className="text-text-muted mb-8 text-lg">
-                            Join thousands of satisfied customers and drivers on our platform
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-4">
-                            <Link
-                                to="/register"
-                                className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center gap-2 group"
-                            >
-                                Create Account
-                                <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            <Link
-                                to="/login"
-                                className="bg-card-dark border-2 border-primary text-primary font-bold px-8 py-4 rounded-xl hover:bg-primary/10 transition-all"
-                            >
-                                Sign In
-                            </Link>
+            {/* CTA Section (only for logged-out users) */}
+            {!user && (
+                <div className={`relative z-10 py-16 px-4 lg:px-8 transition-all duration-1000 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className="max-w-4xl mx-auto text-center">
+                        <div className="bg-card-dark/80 backdrop-blur-xl rounded-3xl border border-border-dark p-12">
+                            <h3 className="text-3xl font-bold text-text-light mb-4">
+                                Ready to Start Your Journey?
+                            </h3>
+                            <p className="text-text-muted mb-8 text-lg">
+                                Join thousands of satisfied customers and drivers on our platform
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-4">
+                                <Link
+                                    to="/register"
+                                    className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-primary/30 transition-all flex items-center gap-2 group"
+                                >
+                                    Create Account
+                                    <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    className="bg-card-dark border-2 border-primary text-primary font-bold px-8 py-4 rounded-xl hover:bg-primary/10 transition-all"
+                                >
+                                    Sign In
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

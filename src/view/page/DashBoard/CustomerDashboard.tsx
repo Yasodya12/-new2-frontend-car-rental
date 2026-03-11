@@ -114,7 +114,7 @@ export function CustomerDashboard() {
                             />
                             <DashboardCard
                                 label="Total Spent"
-                                value={`LKR ${(stats.totalSpent / 1000).toFixed(1)}K`}
+                                value={`LKR ${((stats.totalSpent || 0) / 1000).toFixed(1)}K`}
                                 icon={<FaDollarSign />}
                                 color="warning"
                                 trend="Avg LKR 1.2K per trip"
@@ -136,7 +136,7 @@ export function CustomerDashboard() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[10px] font-medium opacity-70">Total Savings</span>
-                                        <span className="text-xl font-bold">LKR {(stats.totalSavings / 1000).toFixed(1)}K</span>
+                                        <span className="text-xl font-bold">LKR {((stats.totalSavings || 0) / 1000).toFixed(1)}K</span>
                                     </div>
                                 </div>
                             </div>
@@ -196,7 +196,7 @@ export function CustomerDashboard() {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-sm font-bold text-gray-900 mb-1 tracking-tight">Rs. {trip.price.toLocaleString()}</p>
+                                                <p className="text-sm font-bold text-gray-900 mb-1 tracking-tight">Rs. {(trip.price || 0).toLocaleString()}</p>
                                                 <span className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
                                                     trip.status === 'Cancelled' ? 'bg-red-50 text-red-700' :
                                                         'bg-amber-50 text-amber-700'
@@ -264,7 +264,7 @@ export function CustomerDashboard() {
                                     </div>
                                     <div className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 flex-1 min-w-[140px] text-center">
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Period</p>
-                                        <p className="text-xl font-bold text-gray-900 tracking-tight">LKR {(stats.totalSpent / 1000).toFixed(1)}K</p>
+                                        <p className="text-xl font-bold text-gray-900 tracking-tight">LKR {((stats.totalSpent || 0) / 1000).toFixed(1)}K</p>
                                     </div>
                                 </div>
                             </div>
@@ -322,7 +322,7 @@ export function CustomerDashboard() {
                                                             style={{ height: `${Math.max(heightPercent, 12)}%` }}
                                                         >
                                                             <div className="absolute inset-x-0 top-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                                                                <span className="text-[7px] font-bold text-gray-900 whitespace-nowrap">{item.spending.toLocaleString()}</span>
+                                                                <span className="text-[7px] font-bold text-gray-900 whitespace-nowrap">{(item.spending || 0).toLocaleString()}</span>
                                                             </div>
                                                         </div>
                                                     </div>

@@ -1,16 +1,29 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, useMemo, useRef, type ChangeEvent } from "react";
 import { backendApi } from "../../../api";
 import type { PopulatedTripDTO, TripData } from "../../../Model/trip.data.ts";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../store/store.ts";
 import { getAllDrivers, getDriversNearby } from "../../../slices/driverSlices.ts";
 import { getAllVehicles, getVehiclesNearby } from "../../../slices/vehicleSlices.ts";
-import { getAllTrips } from "../../../slices/TripSlice.ts";
+import { getAllTrips, updateTripStatus } from "../../../slices/TripSlice.ts";
 import { getUserFromToken } from "../../../auth/auth.ts";
 import { getUserByEmail } from "../../../slices/UserSlices.ts";
 import { useLocation } from "react-router-dom";
 
 import { SRI_LANKA_PROVINCES, extractDistrictFromAddress } from "../../../utils/sriLankaLocations.ts";
+import Swal from 'sweetalert2';
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
 import { RatingModal } from "../../components/RatingModal/RatingModal.tsx";
 import { LocationPicker } from "../../common/Map/LocationPicker.tsx";
 import { getRouteDistance } from "../../../utils/mapUtils.ts";
@@ -85,6 +98,7 @@ export function Trip() {
         endDate: "",
         distance: "",
         price: 0,
+        driverFee: 0,
         status: "Pending",
         notes: "",
         tripType: "Instant",
@@ -147,6 +161,7 @@ export function Trip() {
     const [startAddress, setStartAddress] = useState<string>("");
     const [endAddress, setEndAddress] = useState<string>("");
     const [isCalculatingDistance, setIsCalculatingDistance] = useState<boolean>(false);
+    const lastSuggestedDriverIdRef = useRef<string>("");
 
     // Invoice Modal State
     const [invoiceTripId, setInvoiceTripId] = useState<string | null>(null);
@@ -206,16 +221,22 @@ export function Trip() {
 
     // Use nearby lists if start location is selected, otherwise use all
     // Filter out unavailable drivers
-    const drivers = (startCoords ? driverState.nearbyList : driverState.list)
-        .filter((d: UserData) => d.isAvailable !== false);
+    const drivers = useMemo(() => {
+        const list = startCoords ? driverState.nearbyList : driverState.list;
+        return list.filter((d: UserData) => d.isAvailable !== false);
+    }, [startCoords, driverState.nearbyList, driverState.list]);
 
-    const vehicles = startCoords ? vehicleState.nearbyList : vehicleState.list;
+    const vehicles = useMemo(() => {
+        return startCoords ? vehicleState.nearbyList : vehicleState.list;
+    }, [startCoords, vehicleState.nearbyList, vehicleState.list]);
 
     // Redundant declarations removed
 
-    const filteredVehicles = selectedCategory === "All"
-        ? vehicles
-        : vehicles.filter(v => (v.category || "Standard") === selectedCategory);
+    const filteredVehicles = useMemo(() => {
+        return selectedCategory === "All"
+            ? vehicles
+            : vehicles.filter(v => (v.category || "Standard") === selectedCategory);
+    }, [vehicles, selectedCategory]);
 
     // Filter Filters for Admin View
     const [activeTab, setActiveTab] = useState<'All' | 'Instant' | 'Scheduled'>('All');
@@ -233,8 +254,8 @@ export function Trip() {
 
     // Filter trips based on inputs
     const getFilteredTrips = () => {
-        if (!trips || !Array.isArray(trips)) return [];
-        return trips.filter(trip => {
+        if (!localTrips || !Array.isArray(localTrips)) return [];
+        return localTrips.filter(trip => {
             // Filter by Tab (Trip Type)
             if (activeTab === 'Instant' && trip.tripType !== 'Instant') return false;
             if (activeTab === 'Scheduled' && trip.tripType !== 'Scheduled') return false;
@@ -304,6 +325,16 @@ export function Trip() {
         (trip) => {
             const tripDriverId = (trip.driverId?._id || trip.driverId || "").toString();
             const currUserId = (user?._id || (user as any)?.id || "").toString();
+
+            // Hide if I rejected this trip
+            if (trip.rejectedDrivers && trip.rejectedDrivers.includes(currUserId)) {
+                return false;
+            }
+
+            // Hide if it's explicitly rejected and assigned to me
+            if (trip.status === "Rejected" && tripDriverId === currUserId) {
+                return false;
+            }
 
             // Show if it's assigned to me OR if it's a broadcast trip
             return (tripDriverId && currUserId && tripDriverId === currUserId) ||
@@ -519,7 +550,6 @@ export function Trip() {
                     const aRouteScore = calculateRouteExpertise(a, startProvince, endProvince);
                     const bRouteScore = calculateRouteExpertise(b, startProvince, endProvince);
                     if (aRouteScore !== bRouteScore) {
-                        console.log(`Route expertise: ${a.name} = ${aRouteScore}, ${b.name} = ${bRouteScore}`);
                         return bRouteScore - aRouteScore;
                     }
                 } else if (startProvince) {
@@ -538,12 +568,23 @@ export function Trip() {
 
             if (sortedDrivers.length > 0) {
                 const bestDriver = sortedDrivers[0];
-                // Auto-select if no driver chosen, or if route changed (endProvince changed)
-                if (!tripData.driverId || (startProvince && endProvince)) {
-                    setTripData(prev => ({ ...prev, driverId: bestDriver._id || "" }));
-                    console.log("Route-based suggestion:", bestDriver.name,
-                        "| Route score:", calculateRouteExpertise(bestDriver, startProvince, endProvince),
-                        "| Route:", startProvince, "→", endProvince);
+                const currentBestId = bestDriver._id || "";
+
+                // Logic:
+                // 1. If no driver is selected, auto-suggest the best one.
+                // 2. If a driver IS selected, only overwrite if the current selection
+                //    is the one WE suggested last time (meaning the user followed our advice)
+                //    AND the new best driver is different.
+
+                if (!tripData.driverId) {
+                    setTripData(prev => ({ ...prev, driverId: currentBestId }));
+                    lastSuggestedDriverIdRef.current = currentBestId;
+                    console.log("Initial auto-suggestion:", bestDriver.name);
+                } else if (tripData.driverId === lastSuggestedDriverIdRef.current && currentBestId !== lastSuggestedDriverIdRef.current) {
+                    // Route changed and user was on our previous suggestion, so suggest new one
+                    setTripData(prev => ({ ...prev, driverId: currentBestId }));
+                    lastSuggestedDriverIdRef.current = currentBestId;
+                    console.log("Updated route-based suggestion:", bestDriver.name);
                 }
             }
         }
@@ -595,10 +636,12 @@ export function Trip() {
                     }
 
                     const calculatedPrice = distance * pricePerKm;
+                    const calculatedDriverFee = calculatedPrice * 0.20; // 20% driver fee
                     setTripData(prev => ({
                         ...prev,
                         distance: distance.toString(),
-                        price: calculatedPrice
+                        price: calculatedPrice,
+                        driverFee: calculatedDriverFee
                     }));
                 } catch (error) {
                     console.error("Error calculating distance:", error);
@@ -630,10 +673,12 @@ export function Trip() {
             }
 
             const calculatedPrice = isNaN(numericDistance) ? 0 : numericDistance * pricePerKm;
+            const calculatedDriverFee = calculatedPrice * 0.20;
             setTripData(prev => ({
                 ...prev,
                 distance: distanceVal,
-                price: calculatedPrice
+                price: calculatedPrice,
+                driverFee: calculatedDriverFee
             }));
             if (appliedPromo) {
                 setAppliedPromo(null);
@@ -654,11 +699,13 @@ export function Trip() {
 
             const currentDistance = parseFloat(tripData.distance);
             const calculatedPrice = !isNaN(currentDistance) ? currentDistance * pricePerKm : 0;
+            const calculatedDriverFee = calculatedPrice * 0.20;
 
             setTripData(prev => ({
                 ...prev,
                 [name]: value,
-                price: calculatedPrice > 0 ? calculatedPrice : prev.price
+                price: calculatedPrice > 0 ? calculatedPrice : prev.price,
+                driverFee: calculatedPrice > 0 ? calculatedDriverFee : prev.driverFee
             }));
             if (appliedPromo) {
                 setAppliedPromo(null);
@@ -682,6 +729,8 @@ export function Trip() {
                 ...prev,
                 date: now.toISOString(),
                 endDate: "",
+                price: 0,
+                driverFee: 0,
                 tripType: "Instant"
             }));
         } else {
@@ -691,6 +740,8 @@ export function Trip() {
                 ...prev,
                 date: now.toISOString(),
                 endDate: "",
+                price: 0,
+                driverFee: 0,
                 tripType: "Scheduled"
             }));
         }
@@ -711,15 +762,78 @@ export function Trip() {
         try {
             await backendApi.put(`/api/v1/trips/status/${tripId}`, { status: newStatus });
 
-            alert(`Trip ${newStatus.toLowerCase()} successfully!`);
+            Toast.fire({
+                icon: 'success',
+                title: `Trip ${newStatus.toLowerCase()} successfully!`
+            });
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 300);
+            // Optimistic update 1: Local State (Immediate Feedback)
+            setLocalTrips(prev => prev.map(t => {
+                if (t._id === tripId) {
+                    const updated = { ...t, status: newStatus };
+                    if (newStatus === 'Accepted' && user) {
+                        // @ts-ignore
+                        updated.driverId = user;
+                    }
+                    return updated;
+                }
+                return t;
+            }));
+
+            // Optimistic update 2: Redux Store (Propagates to other components)
+            dispatch(updateTripStatus({
+                tripId,
+                status: newStatus,
+                driverId: newStatus === 'Accepted' ? user : undefined
+            }));
 
         } catch (err) {
             console.log(err);
-            alert(`Failed to update trip to ${newStatus}`);
+            Toast.fire({
+                icon: 'error',
+                title: `Failed to update trip to ${newStatus}`
+            });
+        }
+    };
+
+    const handleRejectTrip = async (tripId: string) => {
+        const { value: reason, isConfirmed } = await Swal.fire({
+            title: 'Decline Trip Request',
+            input: 'text',
+            inputLabel: 'Reason',
+            inputPlaceholder: 'Optional reason...',
+            showCancelButton: true,
+            confirmButtonText: 'Decline',
+            confirmButtonColor: '#ef4444',
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            await backendApi.put(`/api/v1/trips/${tripId}/reject`, { reason: reason || "Declined by driver" });
+
+            Toast.fire({
+                icon: 'success',
+                title: "Trip request declined."
+            });
+
+            // Optimistic update 1: Local State
+            setLocalTrips(prev => prev.map(t => {
+                if (t._id === tripId) {
+                    return { ...t, status: 'Rejected' };
+                }
+                return t;
+            }));
+
+            // Optimistic update 2: Redux Store
+            dispatch(updateTripStatus({ tripId, status: 'Rejected' }));
+
+        } catch (err: any) {
+            console.error(err);
+            Toast.fire({
+                icon: 'error',
+                title: err.response?.data?.error || "Failed to decline trip request."
+            });
         }
     };
 
@@ -824,6 +938,7 @@ export function Trip() {
                 endDate: "",
                 distance: "",
                 price: 0,
+                driverFee: 0,
                 status: "Pending",
                 notes: "",
                 tripType: "Instant",
@@ -913,8 +1028,14 @@ export function Trip() {
                                     </div>
                                     <div className="flex-1 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total</p>
-                                        <p className="text-2xl font-black text-emerald-600">Rs. {trip.price?.toLocaleString() || "0"}</p>
+                                        <p className="text-2xl font-black text-gray-900">Rs. {trip.price?.toLocaleString() || "0"}</p>
                                     </div>
+                                    {user?.role?.toLowerCase() === 'driver' && (
+                                        <div className="flex-1 bg-accent/10 p-4 rounded-2xl border border-accent/20 shadow-sm">
+                                            <p className="text-[10px] font-bold text-accent uppercase tracking-widest mb-1">Your Payout</p>
+                                            <p className="text-2xl font-black text-accent">Rs. {trip.driverFee !== undefined && trip.driverFee > 0 ? trip.driverFee.toLocaleString() : ((trip.price || 0) * 0.20).toLocaleString()}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -975,13 +1096,56 @@ export function Trip() {
                             </div>
                         </div>
 
+                        {/* Rejection Reason (High Fidelity Display) */}
+                        {trip.status === "Rejected" && trip.rejectionReason && (
+                            <div className="bg-red-50/80 backdrop-blur-md rounded-3xl p-8 border border-red-100 flex gap-6 relative overflow-hidden group/rejection">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+                                <div className="mt-1 w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-500 shadow-sm group-hover/rejection:scale-110 transition-transform">
+                                    <FaStickyNote className="text-xl" />
+                                </div>
+                                <div className="relative z-10">
+                                    <p className="text-[10px] font-black text-red-600/60 uppercase tracking-[0.2em] mb-2">Rejection Analysis</p>
+                                    <p className="text-lg text-red-700 font-bold italic leading-tight">"{trip.rejectionReason}"</p>
+                                    <div className="flex items-center gap-2 mt-3 p-2 bg-white/50 rounded-xl w-fit">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></div>
+                                        <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest">Logged by dispatch system</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Rating Display */}
+                        {trip.rating && (
+                            <div className="bg-amber-50 rounded-3xl p-8 border border-amber-100 flex items-center justify-between">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-500 text-2xl shadow-sm">
+                                        ★
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-1">Customer feedback</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-2xl font-black text-gray-900">{trip.rating.toFixed(1)}</p>
+                                            <div className="flex gap-0.5">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <span key={i} className={`text-lg ${i < Math.round(trip.rating!) ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="hidden sm:block px-6 py-2 bg-white rounded-2xl border border-amber-100 text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">
+                                    Verified Rating
+                                </div>
+                            </div>
+                        )}
+
                         {/* Notes Section */}
                         {trip.notes && (
-                            <div className="bg-amber-50/50 rounded-3xl p-6 border border-amber-100 flex gap-4">
-                                <div className="mt-1 text-amber-500"><FaStickyNote /></div>
+                            <div className="bg-blue-50/50 rounded-3xl p-8 border border-blue-100 flex gap-6">
+                                <div className="mt-1 w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500 shadow-sm"><FaStickyNote className="text-xl" /></div>
                                 <div>
-                                    <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mb-1">Operational Directives</p>
-                                    <p className="text-gray-700 font-medium italic">"{trip.notes}"</p>
+                                    <p className="text-[10px] font-black text-blue-600/60 uppercase tracking-widest mb-2">Operational Directives</p>
+                                    <p className="text-gray-700 font-semibold italic leading-relaxed">"{trip.notes}"</p>
                                 </div>
                             </div>
                         )}
@@ -1047,6 +1211,12 @@ export function Trip() {
                             }`}>
                             {trip.status}
                         </div>
+                        {trip.rating && (
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 text-xs font-bold shadow-sm">
+                                <span className="text-amber-500 text-sm leading-none">★</span>
+                                {trip.rating.toFixed(1)}
+                            </div>
+                        )}
                     </div>
 
                     {/* Action Buttons - Moved below header */}
@@ -1102,7 +1272,7 @@ export function Trip() {
                     </div>
 
                     {/* Trip Info Grid */}
-                    <div className="grid grid-cols-2 gap-4 mb-6 pt-6 border-t border-gray-100">
+                    <div className={`grid gap-4 mb-6 pt-6 border-t border-gray-100 ${user?.role?.toLowerCase() === 'driver' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <div className="trip-stat-card bg-gray-50 p-4 rounded-2xl border border-gray-100 transition-colors group-hover:bg-blue-50 group-hover:border-blue-100">
                             <p className="text-xs font-medium text-gray-500 mb-1">Total Fee</p>
                             <p className="text-lg font-bold text-blue-600">Rs. {trip.price?.toLocaleString()}</p>
@@ -1111,7 +1281,25 @@ export function Trip() {
                             <p className="text-xs font-medium text-gray-500 mb-1">Distance</p>
                             <p className="text-lg font-bold text-gray-900">{trip.distance} <span className="text-sm text-gray-500">km</span></p>
                         </div>
+                        {user?.role?.toLowerCase() === 'driver' && (
+                            <div className="trip-stat-card bg-accent/5 p-4 rounded-2xl border border-accent/10 transition-colors group-hover:bg-accent/10 group-hover:border-accent/20">
+                                <p className="text-xs font-medium text-accent mb-1">Your Cut</p>
+                                <p className="text-lg font-bold text-accent">Rs. {trip.driverFee !== undefined && trip.driverFee > 0 ? trip.driverFee.toLocaleString() : ((trip.price || 0) * 0.20).toLocaleString()}</p>
+                            </div>
+                        )}
                     </div>
+
+                    {trip.status === "Rejected" && trip.rejectionReason && (
+                        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-3 animate-pulse">
+                            <div className="mt-1 text-red-500">
+                                <FaStickyNote />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Rejection Reason</p>
+                                <p className="text-sm text-red-700 font-medium italic">"{trip.rejectionReason}"</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Footer with Icons and Details Button */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -1133,17 +1321,30 @@ export function Trip() {
 
                     {/* Action Buttons for Different States */}
                     {((isMarketplace && isPending) || (!isMarketplace && isPending && user?.role?.toLowerCase() === 'driver')) && (
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.preventDefault();   // 👈 ADD THIS
-                                e.stopPropagation(); // 👈 KEEP THIS
-                                handleStatusUpdateUI(trip._id!, 'Accepted');
-                            }}
-                            className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            <FaCheckCircle /> {isMarketplace ? 'Accept Trip' : 'Accept Request'}
-                        </button>
+                        <div className="flex gap-4 mt-6">
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleStatusUpdateUI(trip._id!, 'Accepted');
+                                }}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <FaCheckCircle /> {isMarketplace ? 'Accept Trip' : 'Accept Request'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRejectTrip(trip._id!);
+                                }}
+                                className="flex-1 bg-white hover:bg-red-50 text-red-600 border border-red-200 py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                ✕ Decline
+                            </button>
+                        </div>
                     )}
 
                     {!isMarketplace && isAccepted && user?.role?.toLowerCase() === 'driver' && (
@@ -1718,12 +1919,25 @@ export function Trip() {
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-6 border-y border-gray-50">
-                                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${trip.status === 'Completed' || trip.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
-                                                        trip.status === 'Accepted' ? 'bg-blue-50 text-blue-600' :
-                                                            trip.status === 'Processing' ? 'bg-amber-50 text-amber-600' :
-                                                                'bg-gray-50 text-gray-400'}`}>
-                                                        {trip.status}
-                                                    </span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${trip.status === 'Completed' || trip.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
+                                                            trip.status === 'Accepted' ? 'bg-blue-50 text-blue-600' :
+                                                                trip.status === 'Processing' ? 'bg-amber-50 text-amber-600' :
+                                                                    trip.status === 'Rejected' ? 'bg-red-50 text-red-600' :
+                                                                        'bg-gray-50 text-gray-400'}`}>
+                                                            {trip.status}
+                                                        </span>
+                                                        {trip.rating && (
+                                                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black shadow-sm" title="Rating">
+                                                                <span className="text-amber-500">★</span> {trip.rating.toFixed(1)}
+                                                            </div>
+                                                        )}
+                                                        {trip.status === 'Rejected' && trip.rejectionReason && (
+                                                            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 hover:scale-110 transition-transform cursor-help" title={`Reason: ${trip.rejectionReason}`}>
+                                                                <FaStickyNote size={12} />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-8 py-6 rounded-r-[1.8rem] border-y border-r border-gray-50 text-right">
                                                     <p className="text-lg font-black text-gray-900 leading-none">Rs. {trip.price?.toLocaleString()}</p>

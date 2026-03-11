@@ -53,7 +53,18 @@ export const reassignTrip = createAsyncThunk(
 const tripSlice = createSlice({
     name: "trip",
     initialState,
-    reducers: {},
+    reducers: {
+        updateTripStatus: (state, action: PayloadAction<{ tripId: string; status: string; driverId?: any }>) => {
+            const { tripId, status, driverId } = action.payload;
+            const trip = state.list.find(t => t._id === tripId);
+            if (trip) {
+                trip.status = status;
+                if (driverId) {
+                    trip.driverId = driverId;
+                }
+            }
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(getAllTrips.pending, (state) => {
@@ -70,5 +81,7 @@ const tripSlice = createSlice({
             });
     }
 });
+
+export const { updateTripStatus } = tripSlice.actions;
 
 export default tripSlice.reducer;

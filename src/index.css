@@ -109,16 +109,9 @@ body {
   background-image: radial-gradient(#2A2A2A 1px, transparent 1px) !important;
 }
 
-.theme-monochrome .bg-gray-900,
-.theme-monochrome .bg-slate-900 {
-  background-color: #F9FAFB !important;
-  color: #0F0F0F !important;
-}
 
-.theme-monochrome .bg-black {
-  background-color: #F9FAFB !important;
-  color: #0F0F0F !important;
-}
+
+
 
 .theme-monochrome .bg-\[\#0B0F1A\],
 .theme-monochrome .bg-\[\#0F172A\],
@@ -135,7 +128,6 @@ body {
 .theme-monochrome .bg-blue-500,
 .theme-monochrome .bg-blue-600 {
   background-color: #60A5FA !important;
-  color: #0F0F0F !important;
 }
 
 .theme-monochrome .bg-primary {
@@ -155,7 +147,6 @@ body {
 .theme-monochrome .bg-emerald-600,
 .theme-monochrome .bg-green-600 {
   background-color: #34D399 !important;
-  color: #0F0F0F !important;
 }
 
 /* Purple backgrounds - keep purple accent */
@@ -167,7 +158,6 @@ body {
 .theme-monochrome .bg-purple-500,
 .theme-monochrome .bg-purple-600 {
   background-color: #A78BFA !important;
-  color: #0F0F0F !important;
 }
 
 /* Red/Amber backgrounds */
@@ -212,7 +202,7 @@ body {
 
 .theme-monochrome .text-gray-200,
 .theme-monochrome .text-gray-100 {
-  color: #525252 !important;
+  color: #F5F5F5 !important;
 }
 
 .theme-monochrome .text-black {
@@ -220,7 +210,7 @@ body {
 }
 
 .theme-monochrome .text-white {
-  color: #0A0A0A !important;
+  color: #FFFFFF !important;
 }
 
 /* Blue text - keep blue visible */
@@ -300,6 +290,7 @@ body {
 
 /* Fix white/light overlays used in modals */
 .theme-monochrome .bg-white\/70,
+.theme-monochrome .bg-white\/60,
 .theme-monochrome .bg-white\/50,
 .theme-monochrome .bg-white\/90,
 .theme-monochrome .bg-white\/80 {
@@ -577,16 +568,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.theme-monochrome a.bg-gray-900,
-.theme-monochrome .bg-gray-900 {
-  background-color: #FFFFFF !important;
-  color: #0A0A0A !important;
-}
 
-.theme-monochrome button.bg-gray-900:hover,
-.theme-monochrome a.bg-gray-900:hover {
-  background-color: #E5E5E5 !important;
-}
 
 /* Dividers */
 .theme-monochrome hr,
@@ -617,8 +599,67 @@ html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-html * {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
+/* Scope transitions to interactive elements to keep the UI feeling fast */
+:where(a,
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  .dashboard-stat-card,
+  .vehicle-card-container,
+  .customer-dashboard-content-card,
+  .customer-dashboard-insight-card,
+  .trip-summary-card,
+  .login-card,
+  .glass-nav,
+  .glass-panel) {
+  transition:
+    background-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 160ms ease,
+    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease,
+    filter 220ms ease;
+}
+
+/* Better keyboard focus (2026-style ring) */
+:where(a, button, input, textarea, select, [role="button"]):focus {
+  outline: none;
+}
+
+:where(a, button, input, textarea, select, [role="button"]):focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 6px rgba(37, 99, 235, 0.12),
+    0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.theme-monochrome :where(a, button, input, textarea, select, [role="button"]):focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.4);
+  box-shadow:
+    0 0 0 6px rgba(96, 165, 250, 0.14),
+    0 12px 28px rgba(0, 0, 0, 0.6);
+}
+
+/* Slight "press" feedback */
+:where(button, [role="button"]):active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* Cross-browser nicer scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.theme-monochrome * {
+  scrollbar-color: #333 transparent;
 }
 
 /* ============================================
@@ -699,4 +740,82 @@ body {
 
 .theme-monochrome .login-page-container {
   background: radial-gradient(circle at top left, #111827 0, #020617 55%, #000000 100%) !important;
+}
+
+/* ============================================
+   LANDING PAGE CTA (Welcome back / Ready to Start)
+   Scoped to the Home landing layout to avoid affecting other pages.
+   ============================================ */
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background:
+    radial-gradient(900px 300px at 50% 0%, rgba(37, 99, 235, 0.16), transparent 65%),
+    radial-gradient(700px 280px at 90% 120%, rgba(16, 185, 129, 0.12), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    0 40px 90px rgba(2, 6, 23, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.theme-monochrome .bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(900px 300px at 50% 0%, rgba(96, 165, 250, 0.18), transparent 65%),
+    radial-gradient(700px 280px at 90% 120%, rgba(52, 211, 153, 0.10), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  box-shadow:
+    0 44px 110px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle animated sheen on hover */
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 180deg at 50% 50%,
+      rgba(37, 99, 235, 0.0),
+      rgba(37, 99, 235, 0.22),
+      rgba(16, 185, 129, 0.18),
+      rgba(245, 158, 11, 0.10),
+      rgba(37, 99, 235, 0.0));
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl:hover::before {
+  opacity: 0.7;
+}
+
+/* Buttons inside that CTA card */
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl a {
+  text-decoration: none;
+}
+
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl a.bg-primary {
+  box-shadow:
+    0 18px 45px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl a.bg-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 22px 55px rgba(37, 99, 235, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl a:not(.bg-primary) {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-bg-dark .max-w-4xl.mx-auto.text-center>.bg-card-dark\/80.backdrop-blur-xl.rounded-3xl a:not(.bg-primary):hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.06);
 }

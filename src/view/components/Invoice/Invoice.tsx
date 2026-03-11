@@ -196,6 +196,24 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
                             </div>
                         </div>
                     </div>
+
+                    {/* Driver Earnings Component */}
+                    <div className="bg-accent/5 p-4 rounded-2xl border border-accent/20 flex justify-between items-center shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent">
+                                💰
+                            </div>
+                            <div>
+                                <p className="text-[8px] font-black text-accent uppercase tracking-widest leading-none mb-1">Driver's Cut</p>
+                                <p className="text-xs font-black text-text-light">{tripDetails?.driverFee !== undefined ? "Operational Fee" : "Estimated Fee"}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-lg font-black text-accent">
+                                LKR {(tripDetails?.driverFee !== undefined ? tripDetails.driverFee : (payment.amount * 0.20)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
