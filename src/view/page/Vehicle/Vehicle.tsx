@@ -208,8 +208,8 @@ export function Vehicle() {
             {/* 1. Header & Quick Metrics (Bento Style) */}
             <div className="flex flex-col lg:flex-row justify-between items-start gap-8 mb-16">
                 <div className="max-w-xl">
-                    <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">Fleet Explorer</h1>
-                    <p className="text-lg text-gray-400 font-medium">Manage and optimize your global transportation assets with precision-engineered controls.</p>
+                    <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4">Vehicle Section</h1>
+                    <p className="text-lg text-gray-400 font-medium">Manage vehicle records with full control.</p>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full lg:w-auto">
@@ -236,7 +236,7 @@ export function Vehicle() {
                             {isUpdateMode ? "↑" : "+"}
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                            {isUpdateMode ? "Asset Configuration" : "Commission New Asset"}
+                            {isUpdateMode ? "Update Car Details" : "Add New Vehicle"}
                         </h2>
                     </div>
 
@@ -249,11 +249,11 @@ export function Vehicle() {
                                 {/* Technical Identity */}
                                 <div className="space-y-8">
                                     <div className="space-y-4">
-                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Technical Identity</span>
+                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Car Details</span>
                                         <div className="space-y-6">
                                             {[
-                                                { label: "Manufacturer Brand", name: "brand", placeholder: "e.g., Mercedes-Benz" },
-                                                { label: "Model Designation", name: "model", placeholder: "e.g., Sprinter Elite" },
+                                                { label: "Car Brand", name: "brand", placeholder: "e.g., Mercedes-Benz" },
+                                                { label: "Model ", name: "model", placeholder: "e.g., Sprinter Elite" },
                                                 { label: "Vehicle Display Name", name: "name", placeholder: "e.g., Alpha-One" }
                                             ].map((field) => (
                                                 <div key={field.name} className="space-y-2">
@@ -269,6 +269,18 @@ export function Vehicle() {
                                                     />
                                                 </div>
                                             ))}
+                                            <div className="space-y-2">
+                                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Color</label>
+                                                <input
+                                                    type="text"
+                                                    name="color"
+                                                    value={formData.color}
+                                                    onChange={handleChange}
+                                                    placeholder="e.g., White"
+                                                    className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-4 px-6 text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-semibold placeholder:text-gray-300"
+                                                    required
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -290,7 +302,7 @@ export function Vehicle() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Fleet Category</label>
+                                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"> Category</label>
                                                 <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl py-4 px-6 text-gray-900 focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 transition-all font-semibold appearance-none">
                                                     <option value="Economy">Economy</option>
                                                     <option value="Standard">Standard</option>
@@ -310,14 +322,14 @@ export function Vehicle() {
                                 {/* Asset Presentation */}
                                 <div className="space-y-8">
                                     <div className="space-y-4">
-                                        <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Asset Documentation</span>
+                                        <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Vehicle Img</span>
                                         <div className="space-y-6">
                                             <div className="space-y-2">
                                                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Vehicle Image Assets</label>
                                                 <ImageUpload
                                                     onUpload={(url) => setFormData(prev => ({ ...prev, image: url }))}
                                                     initialImage={formData.image ? (formData.image.startsWith('http') ? formData.image : `http://localhost:3000/uploads/vehicle/${formData.image}`) : null}
-                                                    label="Upload Technical Asset"
+                                                    label="Upload Vehicle Image"
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -334,7 +346,7 @@ export function Vehicle() {
                                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-center">
                                     <div className="lg:col-span-3">
                                         <LocationPicker
-                                            label="Primary Garage Terminal (Strategic Deployment)"
+                                            label="Add Location(Primary location of vehicle)"
                                             onLocationSelect={(lat, lng, address) => {
                                                 setGarageLocation({ lat, lng, address });
                                             }}
@@ -346,14 +358,14 @@ export function Vehicle() {
                                             type="submit"
                                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold transition-all shadow-xl shadow-blue-500/10 active:scale-95 text-lg"
                                         >
-                                            {isUpdateMode ? "Synchronize Asset" : "Deploy Fleet Unit"}
+                                            {isUpdateMode ? "Update Vehicle" : "Save Vehicle"}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => { setIsUpdateMode(false); setIsEditing(false); }}
                                             className="w-full bg-gray-50 hover:bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold transition-all active:scale-95"
                                         >
-                                            Cancel Operation
+                                            Cancel
                                         </button>
                                     </div>
                                 </div>
@@ -367,7 +379,7 @@ export function Vehicle() {
             <div className="mb-20">
                 <div className="flex justify-between items-end mb-10">
                     <div>
-                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Operational Fleet</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">All Vehicles</h2>
                         <p className="text-gray-400 font-medium">Real-time status and availability across your transportation network.</p>
                     </div>
                     {role === "admin" && !isEditing && (
@@ -406,8 +418,8 @@ export function Vehicle() {
                         <div className="w-16 h-16 rounded-3xl bg-gray-100 flex items-center justify-center text-gray-400 mb-6">
                             <FaCar size={24} />
                         </div>
-                        <p className="text-xl font-bold text-gray-900">No Fleet Units Available</p>
-                        <p className="text-gray-400 mt-2">Begin by commissioning your first transportation asset above.</p>
+                        <p className="text-xl font-bold text-gray-900">No Vehicle Records Available</p>
+                        <p className="text-gray-400 mt-2">No vehicle record found.</p>
                     </div>
                 )}
             </div>

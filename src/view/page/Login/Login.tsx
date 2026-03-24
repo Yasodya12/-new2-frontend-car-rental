@@ -230,7 +230,7 @@ export function Login() {
                     {/* Header */}
                     <div className="mb-12 text-center lg:text-left">
                         <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Welcome back</h3>
-                        <p className="text-gray-500 font-medium text-lg">Enter your credentials to access the platform.</p>
+                        <p className="text-gray-500 font-medium text-lg">Enter your credentials to log in.</p>
                     </div>
 
                     {/* Login Card (Light Glass) */}
@@ -239,7 +239,7 @@ export function Login() {
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 {/* Email Field */}
                                 <div className="space-y-2 text-left">
-                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Corporate Email</label>
+                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1"> Email</label>
                                     <div className="group relative">
                                         <HiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-gray-300 group-focus-within:text-blue-600 transition-colors" />
                                         <input

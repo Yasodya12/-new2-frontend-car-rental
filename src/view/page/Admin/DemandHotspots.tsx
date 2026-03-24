@@ -44,12 +44,12 @@ export function DemandHotspots() {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black text-gray-900 tracking-tight">Demand Hotspots</h1>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Strategic Coverage Intelligence</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Vehicle And Driver Availability Overview</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
                             <div className="px-6 py-3 text-center">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Intelligence</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver & Vehicle Outages ⭐</p>
                                 <p className="text-2xl font-black text-purple-600">{filteredSignals.length}</p>
                             </div>
                         </div>

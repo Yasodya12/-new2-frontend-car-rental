@@ -88,7 +88,7 @@ export function LiveFleetMap() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Live Fleet Map 🌍</h1>
-                    <p className="text-gray-600">Real-time tracking of all active trips and demand signals across the region.</p>
+                    <p className="text-gray-600">Real-time tracking of all active trips and demand signals across the country.</p>
                 </div>
                 <div className="flex gap-4">
                     <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 text-center">
@@ -118,7 +118,7 @@ export function LiveFleetMap() {
             <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden mb-8">
                 <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                     <div>
-                        <h2 className="font-bold text-lg text-blue-800">Global Fleet Overview</h2>
+                        <h2 className="font-bold text-lg text-blue-800">Global view of active trips </h2>
                         <p className="text-sm text-gray-500">
                             {allMarkers.length > 0
                                 ? `Showing ${activeTrips.length} active vehicles and ${demandSignals.length} demand hotspots.`

@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function VehicleModal({ vehicle, onClose, onUpdate, onDelete }: Props) {
-    const imageUrl = vehicle.image ? `http://localhost:3000/uploads/vehicle/${vehicle.image}` : "";
+    const imageUrl = vehicle.image ? (vehicle.image.startsWith('http') ? vehicle.image : `http://localhost:3000/uploads/vehicle/${vehicle.image}`) : "";
     const { role } = useSelector((state: RootState) => state.auth);
 
     return (
@@ -65,7 +65,7 @@ export function VehicleModal({ vehicle, onClose, onUpdate, onDelete }: Props) {
 
                         {/* Description */}
                         <div className="mb-12">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 block">Fleet Intelligence Description</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 block">Description</span>
                             <p className="text-gray-500 leading-relaxed font-medium">
                                 {vehicle.description || "No technical description available for this unit."}
                             </p>
@@ -91,13 +91,13 @@ export function VehicleModal({ vehicle, onClose, onUpdate, onDelete }: Props) {
                                     className="flex-1 bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-gray-200 active:scale-95"
                                     onClick={() => onUpdate(vehicle)}
                                 >
-                                    Modify Assets
+                                    Update Details
                                 </button>
                                 <button
                                     className="px-8 py-4 rounded-2xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all active:scale-95 border border-red-100"
                                     onClick={() => vehicle._id && onDelete(vehicle._id)}
                                 >
-                                    Decommission
+                                    Delete
                                 </button>
                             </div>
                         )}

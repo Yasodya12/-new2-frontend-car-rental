@@ -77,10 +77,10 @@ export function HelpCenter() {
                 <div className="relative">
                     <div className="flex items-center gap-3 text-primary font-bold text-xs uppercase tracking-widest mb-3">
                         <span className="w-8 h-[2px] bg-primary/20"></span>
-                        Communications / Service Desk
+                        Service Desk
                     </div>
                     <h1 className="text-4xl font-extrabold text-text-light tracking-tight">
-                        Support <span className="text-primary font-black">Operations</span> Desk
+                        Support <span className="text-primary font-black">Request</span> Section
                     </h1>
                 </div>
 
@@ -99,9 +99,9 @@ export function HelpCenter() {
             <div className="max-w-[1600px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {[
                     { label: "Total Requests", value: displayTickets.length, color: "text-text-light" },
-                    { label: "Active Threads", value: displayTickets.filter(t => t.status !== 'Resolved').length, color: "text-warning" },
+                    { label: "Active Request", value: displayTickets.filter(t => t.status !== 'Resolved').length, color: "text-warning" },
                     { label: "Resolved As % ", value: `${displayTickets.length > 0 ? Math.round((displayTickets.filter(t => t.status === 'Resolved').length / displayTickets.length) * 100) : 0}%`, color: "text-accent" },
-                    { label: "Response Latency", value: "< 24H", color: "text-primary" }
+                    { label: "Response Time", value: "< 24H", color: "text-primary" }
                 ].map((stat, i) => (
                     <div key={i} className="bg-card-dark border border-border-dark rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-16 h-16 bg-bg-dark rounded-full -mr-8 -mt-8"></div>
@@ -186,7 +186,7 @@ export function HelpCenter() {
                     {displayTickets.length === 0 && (
                         <div className="lg:col-span-3 py-32 text-center bg-card-dark border border-border-dark border-dashed rounded-[3rem]">
                             <p className="text-text-muted text-sm font-semibold italic opacity-60">
-                                {role === 'admin' ? "Zero active incident streams identified." : "No active support cases identified."}
+                                {role === 'admin' ? "No Any support tickets." : "No active support cases identified."}
                             </p>
                         </div>
                     )}

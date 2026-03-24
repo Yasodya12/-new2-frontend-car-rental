@@ -135,7 +135,7 @@ export function Home() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
                             { icon: FaCar, title: "Premium Fleet", desc: "Arrive in style with our curated vehicle selection", color: "primary" },
-                            { icon: FaMapMarkerAlt, title: "Real-time Tracking", desc: "Track your ride in real-time with live location updates", color: "accent" },
+                            // { icon: FaMapMarkerAlt, title: "Real-time Tracking", desc: "Track your ride in real-time with live location updates", color: "accent" },
                             { icon: FaClock, title: "24/7 Available", desc: "Round-the-clock service whenever you need it", color: "primary" },
                             { icon: FaStar, title: "Rated Drivers", desc: "Experience the best with our verified professional drivers", color: "warning" }
                         ].map((feature, i) => (

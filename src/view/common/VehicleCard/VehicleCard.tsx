@@ -11,7 +11,7 @@ export function VehicleCard({ data, onViewDetails }: VehicleCardProps) {
 
     useEffect(() => {
         if (data.image) {
-            setImageUrl(`http://localhost:3000/uploads/vehicle/${data.image}`);
+            setImageUrl(data.image.startsWith('http') ? data.image : `http://localhost:3000/uploads/vehicle/${data.image}`);
         }
     }, [data]);
 

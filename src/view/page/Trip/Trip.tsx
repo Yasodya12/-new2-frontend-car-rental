@@ -1852,9 +1852,9 @@ export function Trip() {
                                 <div>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-1.5 h-8 bg-blue-600 rounded-full"></div>
-                                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Operational Ledger</h2>
+                                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Trip History</h2>
                                     </div>
-                                    <p className="text-gray-400 font-bold uppercase tracking-[0.15em] text-[10px] ml-1">Observing {filteredTrips.length} global logistics vectors</p>
+                                    <p className="text-gray-400 font-bold uppercase tracking-[0.15em] text-[10px] ml-1">You got {filteredTrips.length} trip records</p>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
@@ -1865,7 +1865,7 @@ export function Trip() {
                                             onClick={() => setActiveTab(tab)}
                                             className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-blue-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                                         >
-                                            {tab} Units
+                                            {tab} Trips
                                         </button>
                                     ))}
                                     <div className="w-px h-6 bg-gray-200 mx-1"></div>
@@ -1952,8 +1952,8 @@ export function Trip() {
                                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
                                             <FaRoute size={32} />
                                         </div>
-                                        <p className="text-xl font-black text-gray-900 tracking-tight">Zero Logistics Nodes</p>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">No missions detected within current tactical parameters</p>
+                                        <p className="text-xl font-black text-gray-900 tracking-tight">No Trip Records</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">No any record</p>
                                     </div>
                                 )}
                             </div>

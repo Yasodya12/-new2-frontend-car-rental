@@ -123,11 +123,11 @@ export function User() {
                                 <Link to="/change-password"
                                     className="flex items-center justify-center gap-3 w-full py-4 bg-bg-dark hover:bg-border-dark text-text-light text-[11px] font-bold uppercase tracking-widest rounded-2xl border border-border-dark transition-all shadow-sm group/btn">
                                     <span className="text-xl group-hover/btn:scale-110 transition-transform">🔐</span>
-                                    Security Parameters
+                                    Change Passowrd
                                 </Link>
                                 <button onClick={handleDelete}
                                     className="flex items-center justify-center gap-2 w-full py-3 text-danger/60 hover:text-danger text-[10px] font-bold uppercase tracking-widest transition-all">
-                                    Deactivate Operational Account
+                                    Deactivate Account
                                 </button>
                             </div>
                         </div>
@@ -170,15 +170,15 @@ export function User() {
                         <div className="bg-card-dark border border-border-dark rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden">
                             <h3 className="text-xl font-bold text-text-light mb-10 flex items-center gap-4">
                                 <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-sm shadow-sm">👤</span>
-                                Personal Identification Stream
+                                User Details
                             </h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {[
-                                    { label: "Legal Name", name: "name", value: userData.name, type: "text", disabled: false },
-                                    { label: "Email Terminal", name: "email", value: userData.email, type: "email", disabled: true },
-                                    { label: "Identification (NIC)", name: "nic", value: userData.nic || "", type: "text", disabled: false },
-                                    { label: "Contact Secondary", name: "contactNumber", value: userData.contactNumber || "", type: "text", disabled: false }
+                                    { label: "Name", name: "name", value: userData.name, type: "text", disabled: false },
+                                    { label: "Email ", name: "email", value: userData.email, type: "email", disabled: true },
+                                    { label: "NIC", name: "nic", value: userData.nic || "", type: "text", disabled: false },
+                                    { label: "Contact number", name: "contactNumber", value: userData.contactNumber || "", type: "text", disabled: false }
                                 ].map((field, i) => (
                                     <div key={i}>
                                         <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3 px-1">{field.label}</label>
@@ -197,7 +197,7 @@ export function User() {
 
                             <div className="mt-12 grid grid-cols-2 gap-6 bg-bg-dark border border-border-dark p-6 rounded-3xl border-dashed">
                                 <div>
-                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Birth Record</p>
+                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Birth Day</p>
                                     <p className="text-sm font-bold text-text-light tracking-wide px-1">
                                         {(() => {
                                             if (!userData.dateOfBirth) return "STREAM_PENDING";
@@ -210,7 +210,7 @@ export function User() {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Gender Class</p>
+                                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1 shadow-sm px-1">Gender </p>
                                     <p className="text-sm font-bold text-text-light tracking-wide uppercase px-1">{userData.gender || "STREAM_PENDING"}</p>
                                 </div>
                             </div>
@@ -244,7 +244,7 @@ export function User() {
                         <div className="flex justify-end pt-6">
                             <button type="submit"
                                 className="bg-primary text-white px-16 py-4.5 rounded-[2rem] shadow-xl shadow-primary/20 font-black text-[11px] uppercase tracking-[0.2em] hover:bg-primary/90 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
-                                Commit Profile Dimensions
+                                Save Changes
                             </button>
                         </div>
                     </form>
