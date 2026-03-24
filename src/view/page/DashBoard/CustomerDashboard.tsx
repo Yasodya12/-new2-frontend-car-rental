@@ -87,9 +87,9 @@ export function CustomerDashboard() {
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="bg-white border border-gray-100 text-gray-500 px-6 py-3 rounded-xl font-bold text-xs transition-all hover:bg-gray-50 shadow-sm">
-                                Export
-                            </button>
+                            {/*<button className="bg-white border border-gray-100 text-gray-500 px-6 py-3 rounded-xl font-bold text-xs transition-all hover:bg-gray-50 shadow-sm">*/}
+                            {/*    Export*/}
+                            {/*</button>*/}
                             <Link
                                 to="/trips"
                                 className="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-100 transition-all hover:translate-y-[-2px] active:scale-95 flex items-center justify-center gap-2"

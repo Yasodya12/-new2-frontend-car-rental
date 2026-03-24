@@ -11,7 +11,7 @@ import type { PopulatedTripDTO } from "../../../Model/trip.data.ts";
 import type { UserData } from "../../../Model/userData.ts";
 import { CustomerDashboard } from "./CustomerDashboard.tsx";
 import { DriverDashboard } from "./DriverDashboard.tsx";
-import { FaStickyNote, FaRoute } from "react-icons/fa";
+import { FaStickyNote } from "react-icons/fa";
 
 export function Dashboard() {
     const auth = useSelector((state: RootState) => state.auth);
