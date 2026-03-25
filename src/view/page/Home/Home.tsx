@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import type { RootState } from "../../../store/store.ts";
-import { FaCar, FaMapMarkerAlt, FaClock, FaStar, FaArrowRight } from 'react-icons/fa';
+import { FaCar, FaClock, FaStar, FaArrowRight } from 'react-icons/fa';
 import { HiArrowRight } from 'react-icons/hi';
 
 interface User {
