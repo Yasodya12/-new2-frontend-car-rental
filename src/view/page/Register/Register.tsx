@@ -226,7 +226,7 @@ export function Register() {
                                         <input
                                             type="text"
                                             name="contactNumber"
-                                            placeholder="+94 77 123 4567"
+                                            placeholder="077771234567"
                                             value={form.contactNumber}
                                             onChange={handleChange}
                                             className="w-full bg-bg-dark/60 border border-border-dark rounded-xl py-3 pl-12 pr-4 text-text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-text-muted/50"

@@ -165,7 +165,7 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
                         <p className="text-xs font-bold text-text-light uppercase tracking-widest">{payment.method}</p>
                     </div>
                     <div>
-                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Telemetry</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1 opacity-60">Distance</p>
                         <p className="text-xs font-bold text-text-light">{tripDetails?.distance || "0"} KM</p>
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
 
                     <div className="flex justify-between items-end bg-bg-dark/30 p-4 rounded-2xl border border-border-dark/50 shadow-sm">
                         <div className="space-y-1">
-                            <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] opacity-60">Total Settlement</p>
+                            <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] opacity-60">Total Payment</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-[10px] font-black text-text-muted uppercase">LKR</span>
                                 <span className={`text-3xl font-black ${isPaid ? 'text-accent' : 'text-primary'}`}>
@@ -222,7 +222,7 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
                 {!isPaid && currentUserRole === 'driver' && (
                     <div className="space-y-5">
                         <div className="flex items-center justify-between bg-card-dark p-3 rounded-xl border border-border-dark shadow-sm">
-                            <span className="text-[9px] font-black text-text-muted uppercase tracking-widest px-2">Vector:</span>
+                            <span className="text-[9px] font-black text-text-muted uppercase tracking-widest px-2">Payout Method:</span>
                             <select
                                 value={selectedMethod}
                                 onChange={(e) => setSelectedMethod(e.target.value as any)}
@@ -236,7 +236,7 @@ export function Invoice({ tripId, currentUserRole, onPaymentComplete }: InvoiceP
                             onClick={handleCollectPayment}
                             className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] text-[10px] uppercase tracking-[0.2em]"
                         >
-                            Finalize {selectedMethod} Collection
+                            Conform {selectedMethod} Payment
                         </button>
                     </div>
                 )}

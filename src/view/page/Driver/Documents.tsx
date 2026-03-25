@@ -138,7 +138,7 @@ export function Documents() {
                 </header>
 
                 <div className="space-y-8">
-                    {renderDocumentSection("ID", "National Identity Card", "Official government identification (NIC). Ensure both sides are clearly visible in the captured frame.")}
+                    {renderDocumentSection("ID", "National Identity Card", "Official government identification (NIC). Ensure its clearly visible in the captured frame.")}
                     {renderDocumentSection("License", "Driving Credentials", "A valid professional driving license for the registered vehicle category.")}
                 </div>
             </div>

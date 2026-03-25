@@ -124,10 +124,10 @@ export function CustomerDashboard() {
                         <div className="customer-dashboard-insight-card lg:col-span-4 bg-blue-600 rounded-2xl p-8 flex flex-col justify-between relative overflow-hidden group shadow-xl shadow-blue-50 transition-all hover:translate-y-[-4px]">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                             <div className="relative z-10 text-white">
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-8 opacity-70">Insights</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest mb-8 opacity-70">Details</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                                        <span className="text-[10px] font-medium opacity-70">Success Rate</span>
+                                        <span className="text-[10px] font-medium opacity-70">Trip Completed Rate</span>
                                         <span className="text-xl font-bold">{completionRate.toFixed(0)}%</span>
                                     </div>
                                     <div className="flex items-center justify-between border-b border-white/10 pb-3">

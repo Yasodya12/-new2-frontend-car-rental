@@ -51,7 +51,7 @@ export function User() {
         try {
             // Local file upload logic removed
 
-            const res = await backendApi.put(`/api/v1/users/update/${userData._id}`, userData);
+            const res = await backendApi.put(`/api/v1/users/profile`, userData);
             if (res.status === 200) {
                 alert("User updated successfully!");
             }

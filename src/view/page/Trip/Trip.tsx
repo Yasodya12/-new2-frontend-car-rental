@@ -2030,8 +2030,8 @@ export function Trip() {
                                         <div className="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mx-auto mb-10 text-gray-100">
                                             <FaRoute size={40} />
                                         </div>
-                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Radar Clear</h3>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">No broadcast signals detected in your sector</p>
+                                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">No Unassign Driver Trips</h3>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">No Trips To Pickup With No Driver</p>
                                     </div>
                                 );
                             }
@@ -2089,7 +2089,7 @@ export function Trip() {
                                                 <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-8 text-gray-100">
                                                     <HiTruck size={40} />
                                                 </div>
-                                                <p className="text-xl font-black text-gray-900 tracking-tight lowercase first-letter:uppercase italic font-serif">No missions inscribed in ledger</p>
+                                                <p className="text-xl font-black text-gray-900 tracking-tight lowercase first-letter:uppercase italic font-serif">No Any Trips Records</p>
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4">Awaiting operational requisition...</p>
                                             </div>
                                         );

@@ -258,7 +258,7 @@ export function Login() {
                                 <div className="space-y-2 text-left">
                                     <div className="flex justify-between items-center ml-1">
                                         <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Password</label>
-                                        <Link to="/forgot-password" title="Forgot Password" className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors">Recover?</Link>
+                                        <Link to="/forgot-password" title="Forgot Password" className="text-[11px] font-bold text-blue-600 hover:text-blue-700 transition-colors">Forget Passowrd?</Link>
                                     </div>
                                     <div className="group relative">
                                         <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-gray-300 group-focus-within:text-blue-600 transition-colors" />
@@ -291,7 +291,7 @@ export function Login() {
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     ) : (
                                         <>
-                                            <span>Sign in to Platform</span>
+                                            <span>Sign in</span>
                                             <HiArrowRight className="text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
                                         </>
                                     )}
@@ -327,11 +327,11 @@ export function Login() {
                 </div>
 
                 {/* Global Legal Meta */}
-                <div className="absolute bottom-8 left-0 right-0 px-8 flex justify-center lg:justify-start lg:px-24 text-[10px] font-bold text-gray-300 uppercase tracking-[0.25em] gap-8">
-                    <button className="hover:text-gray-500 transition-colors">Privacy Policy</button>
-                    <button className="hover:text-gray-500 transition-colors">Terms of Use</button>
-                    <button className="hidden lg:block hover:text-gray-500 transition-colors">RideHub Fleet v5.0.2</button>
-                </div>
+                {/*<div className="absolute bottom-8 left-0 right-0 px-8 flex justify-center lg:justify-start lg:px-24 text-[10px] font-bold text-gray-300 uppercase tracking-[0.25em] gap-8">*/}
+                {/*    <button className="hover:text-gray-500 transition-colors">Privacy Policy</button>*/}
+                {/*    <button className="hover:text-gray-500 transition-colors">Terms of Use</button>*/}
+                {/*    <button className="hidden lg:block hover:text-gray-500 transition-colors">RideHub Fleet v5.0.2</button>*/}
+                {/*</div>*/}
             </div>
 
             <style>{`

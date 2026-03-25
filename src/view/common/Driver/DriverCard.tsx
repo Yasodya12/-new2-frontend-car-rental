@@ -1,6 +1,7 @@
 import type { UserData } from "../../../Model/userData.ts";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { backendApi } from "../../../api";
 
 
 
@@ -18,7 +19,7 @@ export function DriverCard({ data, onViewDetails }: driverCardProps) {
 
     useEffect(() => {
         if (data.profileImage) {
-            setImageUrl(`http://localhost:3000/uploads/profile/${data.profileImage}`);
+            setImageUrl(data.profileImage.startsWith('http') ? data.profileImage : `${backendApi.defaults.baseURL}/uploads/profile/${data.profileImage}`);
         }
     }, [data]);
 
@@ -84,12 +85,12 @@ export function DriverCard({ data, onViewDetails }: driverCardProps) {
 
                 {/* Tactics Cluster */}
                 <div className="flex flex-col gap-2">
-                    <button
-                        onClick={handleBookNow}
-                        className="w-full py-3.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transition-all active:scale-[0.98]"
-                    >
-                        Initiate Booking
-                    </button>
+                    {/*<button*/}
+                    {/*    onClick={handleBookNow}*/}
+                    {/*    className="w-full py-3.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transition-all active:scale-[0.98]"*/}
+                    {/*>*/}
+                    {/*    Initiate Booking*/}
+                    {/*</button>*/}
                     {onViewDetails && (
                         <button
                             onClick={onViewDetails}

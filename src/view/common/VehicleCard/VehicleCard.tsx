@@ -1,5 +1,6 @@
 import type { VehicleData } from "../../../Model/vehicleData.ts";
 import { useEffect, useState } from "react";
+import { backendApi } from "../../../api";
 
 type VehicleCardProps = {
     data: VehicleData;
@@ -11,7 +12,7 @@ export function VehicleCard({ data, onViewDetails }: VehicleCardProps) {
 
     useEffect(() => {
         if (data.image) {
-            setImageUrl(data.image.startsWith('http') ? data.image : `http://localhost:3000/uploads/vehicle/${data.image}`);
+            setImageUrl(data.image.startsWith('http') ? data.image : `${backendApi.defaults.baseURL}/uploads/vehicle/${data.image}`);
         }
     }, [data]);
 
