@@ -1,6 +1,5 @@
 import type { UserData } from "../../../Model/userData.ts";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { backendApi } from "../../../api";
 
 
@@ -14,7 +13,6 @@ type driverCardProps = {
 
 export function DriverCard({ data, onViewDetails }: driverCardProps) {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const navigate = useNavigate();
 
 
     useEffect(() => {
@@ -23,9 +21,6 @@ export function DriverCard({ data, onViewDetails }: driverCardProps) {
         }
     }, [data]);
 
-    function handleBookNow() {
-        navigate('/trips');
-    }
 
 
 
